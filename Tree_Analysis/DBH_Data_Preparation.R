@@ -1,4 +1,5 @@
 path_to_tree_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Tree_Analysis"
+setwd(path_to_tree_folder)
 
 library(tidyr)
 
@@ -14,7 +15,6 @@ n.plot = 3
 n.yrs = 2
 
 ## read in data from 2013, 2020, and 2023
-setwd(path_to_tree_data)
 data.2013 = read.csv('Raw_Data/DBH_2013.csv')
 data.2022 = read.csv('Raw_Data/DBH_August2022.csv')
 data.2023 = read.csv('Raw_Data/DBH_Snags_June2023.csv', header=T)
@@ -50,8 +50,8 @@ dbh.all = rbind(data.2013[,new.cols], data.2022[,new.cols])
 dbh.all$redo = "N"
 
 ## read in allometric equation matrices
-allo.df1 = read.csv("Allometric_Equations/Jenkins2004.csv", header=T); rownames(allo.df1) = allo.df1$spp
-allo.df2 = read.csv("Allometric_Equations/Chojnacky2014.csv", header=T); rownames(allo.df2) = allo.df2$spp
+allo.df1 = read.csv("Tree_Databases/Jenkins2004.csv", header=T); rownames(allo.df1) = allo.df1$spp
+allo.df2 = read.csv("Tree_Databases/Chojnacky2014.csv", header=T); rownames(allo.df2) = allo.df2$spp
 
 # add columns for genus and species
 uni.spp = sort(unique(dbh.all$spp))

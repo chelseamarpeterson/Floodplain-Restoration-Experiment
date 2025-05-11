@@ -1,52 +1,55 @@
-setwd('C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/TreeData')
+path_to_tree_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Tree_Analysis"
+setwd(path_to_tree_folder)
 
 library(allodb)
 library(ggplot2)
 library(patchwork)
 library(dplyr)
+library(ggfortify)
+library(reshape2)
 
-### estimate above- and belowground biomass from dbh data (cm) 
+# conversions
+m2_per_ha = 10^4
+
+### estimate above- and belowground biomass from diameter-at-breast height (DBH) data (cm) --- 
 
 # define data-related variables
+trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
 years = c(2013, 2022, 2023)
 n.y = length(years)
 
-# list of species families
-genus.families = list("Acer" = "Sapindaceae",
-                      "Betula" = "Betulaceae",
-                      "Carya" = "Juglandaceae",
-                      "Fraxinus" = "Oleaceae",
-                      "Platanus" = "Platanaceae",
-                      "Quercus" = "Fagaceae",
-                      "Salix" = "Salicaceae",
-                      "Populus" = "Salicaceae",
-                      "Ulmus" = "Ulmaceae",
-                      "Celtis" = "Cannabaceae",
-                      "Morus" = "Moraceae",
-                      "Gleditsia" = "Fabaceae")
+# list of genus families
+family.df = read.csv("Tree_Databases/Tree_Families.csv")
+n.f = nrow(family.df)
+genus.families = list()
+for (i in 1:n.f) { genus.families[[family.df$Genus[i]]] = family.df$Family[i] }
 
 # read in all DBH data
-dbh.all = read.csv("DBH_Data_Clean_2023.csv", header=T)
+dbh.all = read.csv("Clean_Data/DBH_Data_Clean_2023.csv", header=T)
 
 # make list for unique species
 uni.spp = sort(unique(dbh.all$spp))
 n.sp = length(uni.spp)
 
 # read in allometric equation matrices
-allo.df1 = read.csv("Databases/Jenkins2004.csv", header=T); rownames(allo.df1) = allo.df1$spp
-allo.df2 = read.csv("Databases/Chojnacky2014.csv", header=T); rownames(allo.df2) = allo.df2$spp
+allo.df1 = read.csv("Tree_Databases/Jenkins2004.csv", header=T); rownames(allo.df1) = allo.df1$spp
+allo.df2 = read.csv("Tree_Databases/Chojnacky2014.csv", header=T); rownames(allo.df2) = allo.df2$spp
 
-# estimate biomass with allometric eqns in Jenkins (2004) & Chojnacky (2014)
+# estimate biomass with allometric eqns in 1: Jenkins (2004) & 2: Chojnacky (2014)
 new.mat = data.frame(matrix(nrow = length(dbh.all$plot), ncol = 6))
 colnames(new.mat) = c("ab1","ab2","r1","r2","bg1","bg2")
 dbh.all = cbind(dbh.all,new.mat)
 for (sp in uni.spp) {
   sp.ind = which(dbh.all$spp == sp)
+  
+  # Jenkins
   dbh.all[sp.ind,"ab1"] = exp(allo.df1[sp,"ab.b0"] + allo.df1[sp,"ab.b1"]*log(dbh.all[sp.ind,"dbh"]))/1000 # bm = exp(b0 + b1*log(dbh [cm])) [kg -> Mg]
-  dbh.all[sp.ind,"ab2"] = exp(allo.df2[sp,"ab.b0"] + allo.df2[sp,"ab.b1"]*log(dbh.all[sp.ind,"dbh"]))/1000 # bm = exp(b0 + b1*log(dbh [cm])) [kg -> Mg]
   dbh.all[sp.ind,"r1"] = exp(allo.df1[sp,"cr.b0"] + allo.df1[sp,"cr.b1"]/dbh.all[sp.ind,"dbh"]) # ratio = exp(b0 + b1/(dbh [cm]))
-  dbh.all[sp.ind,"r2"] = exp(allo.df2[sp,"cr.b0"] + allo.df2[sp,"cr.b1"]*log(dbh.all[sp.ind,"dbh"])) # ratio = exp(b0 + b1*log(dbh [cm]))
   dbh.all[sp.ind,"bg1"] = dbh.all[sp.ind,"r1"]*dbh.all[sp.ind,"ab1"] 
+  
+  # Chojnacky
+  dbh.all[sp.ind,"ab2"] = exp(allo.df2[sp,"ab.b0"] + allo.df2[sp,"ab.b1"]*log(dbh.all[sp.ind,"dbh"]))/1000 # bm = exp(b0 + b1*log(dbh [cm])) [kg -> Mg]
+  dbh.all[sp.ind,"r2"] = exp(allo.df2[sp,"cr.b0"] + allo.df2[sp,"cr.b1"]*log(dbh.all[sp.ind,"dbh"])) # ratio = exp(b0 + b1*log(dbh [cm]))
   dbh.all[sp.ind,"bg2"] = dbh.all[sp.ind,"r2"]*dbh.all[sp.ind,"ab2"]
 }
 
@@ -63,13 +66,13 @@ sum(is.na(dbh.all[,c("ab1","ab2","r1","r2","bg1","bg2","ab3","bg3")]))
 ### estimate carbon stocks from biomass (cm) ----
 
 # sum above & belowground biomass by species within each plot
-biomass.by.species <- dbh.all %>% 
-                      group_by(redo, year, plot, trt, trt.full, num, spp, genus, species) %>% 
-                      summarise(ab1=sum(ab1), ab2=sum(ab2), ab3=sum(ab3), 
-                                bg1=sum(bg1), bg2=sum(bg2), bg3=sum(bg3))
+biomass.by.species = dbh.all %>% 
+                     group_by(redo, year, plot, trt, trt.full, num, spp, genus, species) %>% 
+                     summarise(ab1=sum(ab1), ab2=sum(ab2), ab3=sum(ab3), 
+                               bg1=sum(bg1), bg2=sum(bg2), bg3=sum(bg3))
 
 # divide biomass by total plot area (Mg/ha)
-areas = c(5*50, 12*48, 12*48)/10^4 # 10^4 m2 = ha
+areas = c(5*50, 12*48, 12*48)/m2_per_ha # 10^4 m2 = ha
 bm.vars = c("ab1","ab2","ab3","bg1","bg2","bg3")
 bm.vars.ha = c("ab_ha1","ab_ha2","ab_ha3","bg_ha1","bg_ha2","bg_ha3")
 for (i in 1:n.y) {
@@ -78,13 +81,16 @@ for (i in 1:n.y) {
 }
 colnames(biomass.by.species)[which(colnames(biomass.by.species) %in% bm.vars)] = bm.vars.ha
 
-# estimate C density by species
-wood.c.df = read.csv("Databases/Doraisami_2021_Wood_C_Database.csv")
+## estimate C density by species
+
+# clean wood database
+wood.c.df = read.csv("Tree_Databases/Doraisami_2021_Wood_C_Database.csv")
 live.wood.c.df = wood.c.df[which(wood.c.df$dead.alive == "alive" & wood.c.df$growth.form == "tree"),]
-live.stem.c.df = live.wood.c.df[-which(live.wood.c.df$tissue %in% c("bark","twig","branch","coarseroot","fineroot","sapwood")),]
+live.stem.c.df = live.wood.c.df[which(live.wood.c.df$tissue %in% c("stem")),]
 live.stem.c.df = live.stem.c.df %>% separate(binomial.resolved, c("genus","spp"), sep="_", remove=F)
 live.stem.c.df$species = paste(live.stem.c.df$genus, live.stem.c.df$spp, sep= " ")
 
+# get best-available density for each species
 tree.C.content = 0.48 #%
 biomass.by.species$taxon.c.content = rep(0, nrow(biomass.by.species))
 biomass.by.species$binomial = paste(biomass.by.species$genus, biomass.by.species$species, sep=" ")
@@ -172,13 +178,21 @@ orig.ind.spp = which((C.stocks.by.species$redo == "N" & C.stocks.by.species$year
 C.stocks.by.species.redo = C.stocks.by.species[-orig.ind.spp,]
 C.stocks.by.species.redo[which(C.stocks.by.species.redo$year == 2023),"year"] = 2022
 
+# estimate total biomass C stocks per ha
+C.stocks.by.species.redo = C.stocks.by.species.redo %>% 
+                            group_by(redo, year, plot, trt, trt.full, num, spp, genus, species) %>%
+                            summarise(abC_ha1 = abC_ha1, abC_ha2 = abC_ha2, abC_ha3 = abC_ha3,
+                                      bgC_ha1 = bgC_ha1, bgC_ha2 = bgC_ha2, bgC_ha3 = bgC_ha3,
+                                      bmC_ha1 = abC_ha1 + bgC_ha1,
+                                      bmC_ha2 = abC_ha2 + bgC_ha2,
+                                      bmC_ha3 = abC_ha3 + bgC_ha3)
+
 # write C stocks results to file
-write.csv(C.stocks.by.plot.redo, "Biomass_C_stocks_by_plot.csv", row.names=F)
-write.csv(C.stocks.by.species.redo, "Biomass_C_stocks_by_species.csv", row.names=F)
+write.csv(C.stocks.by.plot.redo, "Clean_Data/Biomass_C_Stocks_By_Plot.csv", row.names=F)
+write.csv(C.stocks.by.species.redo, "Clean_Data/Biomass_C_Stocks_By_Species.csv", row.names=F)
 
 ################################################################################
-### compare results across allometric equations
-library(reshape2)
+### compare results across allometric equations (not checked)
 
 # replace redo plot biomass data
 biomass.redo.ind = which(biomass.by.plot$redo == "N" & (biomass.by.plot$year == "2022" & biomass.by.plot$plot %in% redo.plots))
@@ -225,7 +239,7 @@ summary(aov.method.log.bg)
 plot(aov.method.log.bg)
 
 ################################################################################
-## do PCA on biomass carbon stocks by species
+## PCA on biomass carbon stocks by species (not checked)
 
 uni.spp = unique(C.stocks.by.species.redo$spp)
 n.sp = length(uni.spp)
@@ -259,7 +273,6 @@ for (y in years) {
 }
             
 ## run PCA
-library(ggfortify)
 pca.C = prcomp(df.c[,-seq(1,5)], center=T, scale=T)
 summary(pca.C)
 
@@ -300,70 +313,3 @@ ggplot(data = rot, aes(x=0, y=0, xend = PC1, yend = PC2, label = var)) +
         labs(x = "PC1 (13.0%)", y = "PC2 (11.5%)", color="") + 
         theme(legend.title = element_blank(), legend.text = element_text(size=10), 
               axis.title = element_text(size=14), axis.text = element_text(size=10))
-
-################################################################################
-## compare allometric equations
-
-# calculate difference between two sets of allo eqns
-ab_diff = trt.df$ab_C_ha1-trt.df$ab_C_ha2
-bg_diff = trt.df$bg_C_ha1-trt.df$bg_C_ha2
-par(mfrow=c(1,2))
-hist(ab_diff)
-hist(bg_diff)
-sum(ab_diff)
-sum(bg_diff)
-
-# plot two sets of allo eqns
-sp.colors = rep(0,10)
-colors = c('cyan','orange','black','red','blue','green')
-sp.order = c('Acersai','Aceneg','Quercus','Salix/Populus','Fraxinus','Carya')
-for (i in 1:10) {
-  sp = uni.sp[i]
-  if (sp %in% oaks) {
-    sp.colors[i] = 'black'
-  } else if (sp %in% willows | sp=="Popdel") {
-    sp.colors[i] = 'red'
-  } else if (sp == "Fralan") {
-    sp.colors[i] = 'blue'
-  } else if (sp == "Carill") {
-    sp.colors[i] = 'green'
-  } else if (sp == "Aceneg") {
-    sp.colors[i] = 'orange'
-  } else if (sp == "Acesai") {
-    sp.colors[i] = 'cyan'
-  }
-}
-dhb.range = seq(2.5,55,2.5)
-par(mfrow=c(1,2))
-plot(dhb.range,allo.df1[uni.sp[1],"ab.b0"]+allo.df1[uni.sp[1],"ab.b1"]*dhb.range,
-     type='n',ylim=c(0,2.6),xlab="DBH (cm)",ylab="Aboveground Biomass (Mg)",
-     main="Jenkins et al. (2003)")
-for (i in 1:10) {
-  sp = uni.sp[i]
-  if (sp %in% oaks) {
-    lines(dhb.range,exp(allo.df1[sp,"ab.b0"]+allo.df1[sp,"ab.b1"]*log(dhb.range))/1000,
-          col=sp.colors[i],lwd=2,lty=1)
-  } else if (sp == "Carill") {
-    lines(dhb.range,exp(allo.df1[sp,"ab.b0"]+allo.df1[sp,"ab.b1"]*log(dhb.range))/1000,
-          col=sp.colors[i],lwd=3,lty=1)
-  } else {
-    lines(dhb.range,exp(allo.df1[sp,"ab.b0"]+allo.df1[sp,"ab.b1"]*log(dhb.range))/1000,
-          col=sp.colors[i],lwd=2,lty=2)
-  }
-}
-legend(legend=sp.order,col=colors,x="topleft",lwd=2,lty=2)
-
-plot(dhb.range,allo.df2[uni.sp[1],"ab.b0"]+allo.df2[uni.sp[1],"ab.b1"]*dhb.range,
-     type='n',ylim=c(0,2.6),xlab="DBH (cm)",ylab="",
-     main="Chojnacky et al. (2014)")
-for (i in 1:10) {
-  sp = uni.sp[i]
-  if (sp %in% oaks | sp == "Carill") {
-    lines(dhb.range,exp(allo.df2[sp,"ab.b0"]+allo.df2[sp,"ab.b1"]*log(dhb.range))/1000,
-          col=sp.colors[i],lwd=2,lty=1)
-  } else {
-    lines(dhb.range,exp(allo.df2[sp,"ab.b0"]+allo.df2[sp,"ab.b1"]*log(dhb.range))/1000,
-          col=sp.colors[i],lwd=2,lty=2)
-  }
-}
-
