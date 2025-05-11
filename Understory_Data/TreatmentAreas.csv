@@ -1,0 +1,23 @@
+OBJECTID,Treatment,SHAPE_Leng,SHAPE_Area,New_Treatm,Area (ha),Ave vertical height (m),Ave horizontal width (m)
+2,B,363.7225573,3703.959178,Tree-dominated,0.37,24,157
+3,D,360.8685789,4488.124549,RCG-dominated,0.45,30,149
+4,C,332.8121079,3948.795129,Mixed forest,0.39,29,139
+5,E,332.4550262,5131.627866,RCG-dominated,0.51,68,95
+7,C,374.9246242,4388.366155,Mixed forest,0.44,28,160
+8,C,283.5586607,4789.646571,Mixed forest,0.48,90,71
+9,E,276.436253,4428.585696,RCG-dominated,0.44,53,97
+10,A,293.8332871,3845.738301,Tree-dominated,0.38,36,120
+11,C,334.4536881,4105.296525,Mixed forest,0.41,31,146
+12,B,358.5231156,4344.431554,Tree-dominated,0.43,28,151
+13,E,320.3819559,1921.050654,RCG-dominated,0.19,16,151
+14,A,333.2646306,3687.278617,Tree-dominated,0.37,27,136
+15,D,346.1495368,3601.459759,RCG-dominated,0.36,25,143
+16,C,367.1541015,3850.393358,Mixed forest,0.39,24,173
+17,B,368.4197956,3803.279006,Tree-dominated,0.38,23,160
+,,,,,,,
+Treatment,Area (m2),Area (ha),,,,,
+A - Balled-and-burlapped,7533.02,0.75,,,,,
+B - Bareroot,11851.67,1.19,,,,,
+C - Seedlings,21082.5,2.11,,,,,
+D - Acorns,8089.58,0.81,,,,,
+E - Seedbank,11481.26,1.15,,,,,

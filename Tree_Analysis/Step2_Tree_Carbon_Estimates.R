@@ -200,8 +200,8 @@ C.stocks.by.species.redo = C.stocks.by.species.redo %>%
                                       bmC_ha3 = abC_ha3 + bgC_ha3)
 
 # write C stocks results to file
-write.csv(C.stocks.by.plot.redo, "Clean_Data/Biomass_C_Stocks_By_Plot.csv", row.names=F)
-write.csv(C.stocks.by.species.redo, "Clean_Data/Biomass_C_Stocks_By_Species.csv", row.names=F)
+write.csv(C.stocks.by.plot.redo, "Clean_Data/WoodyBiomass_C_Stocks_By_Plot.csv", row.names=F)
+write.csv(C.stocks.by.species.redo, "Clean_Data/WoodyBiomass_C_Stocks_By_Species.csv", row.names=F)
 
 ################################################################################
 ### compare results across allometric equations (not checked)

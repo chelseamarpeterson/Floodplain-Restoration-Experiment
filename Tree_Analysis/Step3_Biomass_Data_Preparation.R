@@ -82,7 +82,7 @@ fwd.counts = fwd.counts[trt.sort$ix,]
 
 # estimate FWD volume (m^3/ha) and C storage (Mg/ha)
 fwd.counts$fwd.vol = (1/(plot.length*ft_per_m)) * (C1*(pi^2)/8) * fwd.counts$fwd.count * ((med.fwd.diam/cm_per_in)^2) #m3/ha
-fwd.counts$fwd.carbon = fwd.counts$fwd.vol * fwd.C.content * cwd.density.decay.class3 # m3/ha * g/cm3 * g/g = Mg/ha
+fwd.counts$int.fwd.carbon = fwd.counts$fwd.vol * fwd.C.content * cwd.density.decay.class3 # m3/ha * g/cm3 * g/g = Mg/ha
 
 # make data frame for coarse woody debris (>7.5 cm)
 cwd.diams = cwd.data[-which(is.na(cwd.data$diameter)), -which(colnames(cwd.data) == "fwd.count")]
@@ -140,11 +140,6 @@ for (i in 1:6) {
 }
 trt.sort = sort(cwd.sum$trt, index.return=T)
 cwd.sum = cwd.sum[trt.sort$ix,]
-
-# add to biomass dataframe
-all.bm.data = right_join(fwd.counts[,c("trt","trt.full","num","fwd.carbon")], 
-                         cwd.sum[,c("trt","trt.full","num","cwd.carbon")], 
-                         by=c("trt","trt.full","num"))
 
 # sum carbon stocks (Mg/ha) by species
 cwd.diams$species[which(cwd.diams$species == "")] = "Unknown"
@@ -309,14 +304,6 @@ for (i in 1:6) {
 trt.sort = sort(snag.count.sum$trt, index.return=T)
 snag.count.sum = snag.count.sum[trt.sort$ix,]
 
-# add to biomass dataframe
-all.bm.data = right_join(all.bm.data,
-                         snag.sum[,c("trt","trt.full","num","snag.carbonmin")], 
-                         by=c("trt","trt.full","num"))
-all.bm.data = right_join(all.bm.data,
-                         snag.count.sum[,c("trt","trt.full","num","dead.stem.carbonmin")], 
-                         by=c("trt","trt.full","num"))
-
 # species-level estimates of snag C stocks
 snag.sp.sum = snag.diams %>% 
               group_by(trt, trt.full, num, species) %>% 
@@ -438,11 +425,6 @@ for (i in 1:6) {
 trt.sort = sort(live.stem.sum$trt, index.return=T)
 live.stem.sum = live.stem.sum[trt.sort$ix,]
 
-# add to biomass dataframe
-all.bm.data = right_join(all.bm.data,
-                         live.stem.sum[,c("trt","trt.full","num","live.stem.carbon")], 
-                         by=c("trt","trt.full","num"))
-
 # sum data by species
 live.stem.sp.sum = all.stem.data %>% 
                    group_by(trt, trt.full, num, species) %>% 
@@ -483,30 +465,38 @@ stem.sp.melt = stem.sp.melt[trt.sort$ix,]
 # write cleaned live stem data to csv
 write.csv(stem.sp.melt, "Clean_Data/LiveStem_Carbon_Stocks_By_Species.csv", row.names=F)
 
-### read in calculated tree and soil C stock data ---- #########################
+### read in calculated tree C stock data ---- #########################
 ### double-checked #############################################################
 
 # tree data
-C.stock.data = read.csv("Clean_Data/Biomass_C_stocks_by_plot.csv", header=T)
+C.stock.data = read.csv("Clean_Data/WoodyBiomass_C_Stocks_By_Plot.csv", header=T)
 C.stock.2022 = C.stock.data[which(C.stock.data$year==2022), c("trt","trt.full","num","abC_ha3")]
 C.stock.2022$num = as.character(C.stock.2022$num)
-colnames(C.stock.2022)[4] = c("live.woody.C.stock")
+colnames(C.stock.2022)[4] = c("live.woody.c.stock")
 trt.sort = sort(C.stock.2022$trt, index.return=T)
 C.stock.2022 = C.stock.2022[trt.sort$ix,]
-all.bm.data = right_join(all.bm.data, C.stock.2022, by=c("trt","trt.full","num"))
 
-# soil data
-ave.soil.data = read.csv("SoilData/Soil_Data_Averaged_by_Plot_June2023.csv", header=T)
-ave.soil.data$num = as.character(ave.soil.data$num)
-all.bm.data = right_join(all.bm.data, 
-                         ave.soil.data[,c("trt","trt.full","num","SOC","TC")], 
+# combine CWD/FWD/snag/woody biomass dataframes 
+all.bm.data = right_join(fwd.counts[,c("trt","trt.full","num","int.fwd.carbon")], 
+                         cwd.sum[,c("trt","trt.full","num","cwd.carbon")], 
                          by=c("trt","trt.full","num"))
+all.bm.data = right_join(all.bm.data,
+                         snag.sum[,c("trt","trt.full","num","snag.carbonmin")], 
+                         by=c("trt","trt.full","num"))
+all.bm.data = right_join(all.bm.data,
+                         snag.count.sum[,c("trt","trt.full","num","dead.stem.carbonmin")], 
+                         by=c("trt","trt.full","num"))
+all.bm.data = right_join(all.bm.data,
+                         live.stem.sum[,c("trt","trt.full","num","live.stem.carbon")], 
+                         by=c("trt","trt.full","num"))
+all.bm.data = right_join(all.bm.data, C.stock.2022, by=c("trt","trt.full","num"))
 
 #### read in C stocks for herbaceous litter, FWD, and biomass --- ##############
 ### double-checked #############################################################
 
 # read in understory data
-understory.data = read.csv("VegetationData/CN_Summary_2022.csv", header=T)
+setwd(path_to_repo)
+understory.data = read.csv("Understory_Data/CN_Summary_2022.csv", header=T)
 
 # convert g/m2 to Mg/ha [(g/m2) * (1 Mg/10^6 g) * (10^4 m2/ha)]
 understory.data$C.Mg.ha = understory.data$C.g.m2 / 100
@@ -527,15 +517,14 @@ for (t in types) {
 }
 
 # sum together herbaceous C stocks
-all.bm.data = all.bm.data %>% 
-              mutate(total.C.Mg.ha = PA.C.Mg.ha + HJ.C.Mg.ha + mix.C.Mg.ha)
+all.bm.data = all.bm.data %>% mutate(total.C.Mg.ha = PA.C.Mg.ha + HJ.C.Mg.ha + mix.C.Mg.ha)
 
 ## calculate weighted biomass C & N concentrations
 
 # fill in zeros of C/N data
 understory.data$C[which(is.na(understory.data$C))] = 0
 understory.data$N[which(is.na(understory.data$N))] = 0
-all.bm.data$bm.CN.ratio = rep(0, nrow(all.bm.data))
+all.bm.data$herb.bm.CN.ratio = rep(0, nrow(all.bm.data))
 for (i in 1:6) {
   for (j in 1:3) {
     t = trts[i]
@@ -546,47 +535,9 @@ for (i in 1:6) {
     t.C.weighted = as.numeric((t.C.conc %*% t.bm)/sum(t.bm))
     t.N.weighted = as.numeric((t.N.conc %*% t.bm)/sum(t.bm))
     t.num.id = which(all.bm.data$trt == t & all.bm.data$num == j)
-    all.bm.data[t.num.id,"bm.CN.ratio"] = t.C.weighted/t.N.weighted
+    all.bm.data[t.num.id,"herb.bm.CN.ratio"] = t.C.weighted/t.N.weighted
   }
 }
 
-#### read in species richness data --- #########################################
-### double-checked #############################################################
-
-# herbaceous species data
-sp.richness.df = read.csv("VegetationData/Species_Richness_by_Plot_and_Year.csv")
-
-# average richness by year
-sp.aves = sp.richness.df %>% 
-          group_by(Trt, Num) %>%
-          summarize(N = mean(N))
-colnames(sp.aves) = c("trt","num","N.herb")
-
-# tree species data
-C.stock.sp.df = read.csv("Clean_Data/Biomass_C_Stocks_By_Species.csv", header=T)
-C.stock.sp.df.2022 = C.stock.sp.df[which(C.stock.sp.df$year == 2022),]
-
-# make dataframe for unique tree species
-n.t = 6; n.p = 3; nums = seq(1,3)
-n.tree.sp.df = data.frame(matrix(nrow=n.t*n.p, ncol=3))
-colnames(n.tree.sp.df) = c("trt","num","N.tree")
-k = 1
-for (t in 1:n.t) {
-  for (n in 1:n.p) {
-    tn.id = which(C.stock.sp.df.2022$trt == trts[t] & C.stock.sp.df.2022$num == nums[n])
-    tn.df = C.stock.sp.df.2022[tn.id,]
-    tn.sp = length(sort(unique(tn.df$spp)))
-    n.tree.sp.df[k, c("trt","num","N.tree")] = c(trts[t], as.numeric(nums[n]), as.numeric(tn.sp))
-    k = k + 1
-  }
-}
-
-# add richness values to biomass data frame
-all.bm.data$num = as.numeric(all.bm.data$num)
-n.tree.sp.df$num = as.numeric(n.tree.sp.df$num)
-n.tree.sp.df$N.tree = as.numeric(n.tree.sp.df$N.tree)
-all.bm.data = right_join(all.bm.data, sp.aves, by=c("trt","num"))
-all.bm.data = right_join(all.bm.data, n.tree.sp.df, by=c("trt","num"))
-
-# write data to file
-write.csv(all.bm.data, "Clean_Data/Clean_Cstocks_Richness.csv", row.names=F)
+setwd(path_to_tree_folder)
+write.csv(all.bm.data, "Clean_Data/All_Vegetation_C_Stocks_By_Plot.csv", row.names=F)
