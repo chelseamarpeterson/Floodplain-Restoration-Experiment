@@ -10,6 +10,17 @@ library(reshape2)
 
 # conversions
 m2_per_ha = 10^4
+kg_per_Mg = 10^3
+
+# constants
+tree.C.content = 0.48 # %
+bg.ab.ratio = 0.20 
+
+# plot dimensions (m)
+plot.length.2022 = 48 
+plot.width.2022 = 12 
+plot.length.2013 = 50
+plot.width.2013 = 5 
 
 ### estimate above- and belowground biomass from diameter-at-breast height (DBH) data (cm) --- 
 
@@ -43,12 +54,12 @@ for (sp in uni.spp) {
   sp.ind = which(dbh.all$spp == sp)
   
   # Jenkins
-  dbh.all[sp.ind,"ab1"] = exp(allo.df1[sp,"ab.b0"] + allo.df1[sp,"ab.b1"]*log(dbh.all[sp.ind,"dbh"]))/1000 # bm = exp(b0 + b1*log(dbh [cm])) [kg -> Mg]
+  dbh.all[sp.ind,"ab1"] = exp(allo.df1[sp,"ab.b0"] + allo.df1[sp,"ab.b1"]*log(dbh.all[sp.ind,"dbh"]))/kg_per_Mg # bm = exp(b0 + b1*log(dbh [cm])) [kg -> Mg]
   dbh.all[sp.ind,"r1"] = exp(allo.df1[sp,"cr.b0"] + allo.df1[sp,"cr.b1"]/dbh.all[sp.ind,"dbh"]) # ratio = exp(b0 + b1/(dbh [cm]))
   dbh.all[sp.ind,"bg1"] = dbh.all[sp.ind,"r1"]*dbh.all[sp.ind,"ab1"] 
   
   # Chojnacky
-  dbh.all[sp.ind,"ab2"] = exp(allo.df2[sp,"ab.b0"] + allo.df2[sp,"ab.b1"]*log(dbh.all[sp.ind,"dbh"]))/1000 # bm = exp(b0 + b1*log(dbh [cm])) [kg -> Mg]
+  dbh.all[sp.ind,"ab2"] = exp(allo.df2[sp,"ab.b0"] + allo.df2[sp,"ab.b1"]*log(dbh.all[sp.ind,"dbh"]))/kg_per_Mg # bm = exp(b0 + b1*log(dbh [cm])) [kg -> Mg]
   dbh.all[sp.ind,"r2"] = exp(allo.df2[sp,"cr.b0"] + allo.df2[sp,"cr.b1"]*log(dbh.all[sp.ind,"dbh"])) # ratio = exp(b0 + b1*log(dbh [cm]))
   dbh.all[sp.ind,"bg2"] = dbh.all[sp.ind,"r2"]*dbh.all[sp.ind,"ab2"]
 }
@@ -57,8 +68,8 @@ for (sp in uni.spp) {
 dbh.all$ab3 = get_biomass(dbh = dbh.all$dbh, 
                           genus = dbh.all$genus, 
                           species = dbh.all$species, 
-                          coords = c(-90.1835, 41.5542))/1000 # [kg -> Mg]
-dbh.all$bg3 = 0.20 * dbh.all$ab3
+                          coords = c(-90.1835, 41.5542))/kg_per_Mg # [kg -> Mg]
+dbh.all$bg3 = bg.ab.ratio * dbh.all$ab3
 
 # check for NAs
 sum(is.na(dbh.all[,c("ab1","ab2","r1","r2","bg1","bg2","ab3","bg3")]))
@@ -72,7 +83,9 @@ biomass.by.species = dbh.all %>%
                                bg1=sum(bg1), bg2=sum(bg2), bg3=sum(bg3))
 
 # divide biomass by total plot area (Mg/ha)
-areas = c(5*50, 12*48, 12*48)/m2_per_ha # 10^4 m2 = ha
+areas = c(plot.width.2013*plot.length.2013, 
+          plot.width.2022*plot.length.2022, 
+          plot.width.2022*plot.length.2022)/m2_per_ha # 10^4 m2 = ha
 bm.vars = c("ab1","ab2","ab3","bg1","bg2","bg3")
 bm.vars.ha = c("ab_ha1","ab_ha2","ab_ha3","bg_ha1","bg_ha2","bg_ha3")
 for (i in 1:n.y) {
@@ -86,12 +99,11 @@ colnames(biomass.by.species)[which(colnames(biomass.by.species) %in% bm.vars)] =
 # clean wood database
 wood.c.df = read.csv("Tree_Databases/Doraisami_2021_Wood_C_Database.csv")
 live.wood.c.df = wood.c.df[which(wood.c.df$dead.alive == "alive" & wood.c.df$growth.form == "tree"),]
-live.stem.c.df = live.wood.c.df[which(live.wood.c.df$tissue %in% c("stem")),]
+live.stem.c.df = live.wood.c.df[which(live.wood.c.df$tissue == "stem"),]
 live.stem.c.df = live.stem.c.df %>% separate(binomial.resolved, c("genus","spp"), sep="_", remove=F)
 live.stem.c.df$species = paste(live.stem.c.df$genus, live.stem.c.df$spp, sep= " ")
 
 # get best-available density for each species
-tree.C.content = 0.48 #%
 biomass.by.species$taxon.c.content = rep(0, nrow(biomass.by.species))
 biomass.by.species$binomial = paste(biomass.by.species$genus, biomass.by.species$species, sep=" ")
 biomass.by.species$family = rep(NA, nrow(biomass.by.species))
