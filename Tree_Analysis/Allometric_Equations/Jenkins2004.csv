@@ -1,0 +1,19 @@
+ab.b0,ab.b1,cr.b0,cr.b1,spp,genus,species,category,note
+-1.9123,2.3651,-1.6911,0.816,Aceneg,Acer,negundo,soft maple/birch,used genus
+-1.9123,2.3651,-1.6911,0.816,Acesai,Acer,saccharinum,soft maple/birch,used genus
+-1.9123,2.3651,-1.6911,0.816,Betnig,Betula,nigra,soft maple/birch,used genus
+-2.0127,2.4342,-1.6911,0.816,Carill,Carya,illinoiensis,hard maple/oak/hickory/beech,used genus
+-2.48,2.4835,-1.6911,0.816,Celocc,Celtis,occidentalis,mixed hardwood (spg 0.49),assumed
+-2.48,2.4835,-1.6911,0.816,Fralan,Fraxinus,lanceolata,mixed hardwood,used genus
+-2.48,2.4835,-1.6911,0.816,Fraxpen,Fraxinus,pennsylvanica,mixed hardwood,used genus/species
+-2.0127,2.4342,-1.6911,0.816,Gletria,Gleditsia,triacanthos,hard maple/oak/hickory/beech,assumed (spg 0.60)
+-2.48,2.4835,-1.6911,0.816,Moralb,Morus,alba,mixed hardwood,assumed (spg 0.55)
+-2.48,2.4835,-1.6911,0.816,Plaocc,Platanus,occidentalis,mixed hardwood,used genus/species
+-2.2094,2.3867,-1.6911,0.816,Popdel,Populus,deltoides,aspen/alder/cottonwood/willow,used genus/species
+-2.0127,2.4342,-1.6911,0.816,Quebic,Quercus,bicolor,hard maple/oak/hickory/beech,used genus
+-2.0127,2.4342,-1.6911,0.816,Quemac,Quercus,macrocarpa,hard maple/oak/hickory/beech,used genus
+-2.0127,2.4342,-1.6911,0.816,Quepal,Quercus,palustris,hard maple/oak/hickory/beech,used genus
+-2.2094,2.3867,-1.6911,0.816,Salexi,Salix,exigua,aspen/alder/cottonwood/willow,used genus
+-2.2094,2.3867,-1.6911,0.816,Salint,Salix,interior,aspen/alder/cottonwood/willow,used genus
+-2.2094,2.3867,-1.6911,0.816,Salnig,Salix,nigra,aspen/alder/cottonwood/willow,used genus
+-2.48,2.4835,-1.6911,0.816,Ulmame,Ulmus,americana,mixed hardwood,used genus/species
