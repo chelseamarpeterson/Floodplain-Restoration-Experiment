@@ -1,4 +1,5 @@
-setwd('C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/SoilData')
+path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Soil_Data"
+setwd(path_to_soil_folder)
 
 library(ggplot2)
 library(tidyr)
@@ -7,9 +8,6 @@ library(readxl)
 library(dplyr)
 library(reshape2)
 library(viridis)
-library(lme4)
-library(ggfortify)
-library(lmerTest)
 library(tidyverse)
 
 ################################################################################
@@ -20,12 +18,11 @@ trts = c("A","B","C","D","E","R")
 trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
 
 # read in all soil data
-temp.data = read.table("SoilTemperature_June2023.csv", header=T, sep=",")[,seq(1,5)]
-bd.data = read_excel("Soil_Data_Sheets_June2023.xlsx", sheet="Bulk density sorted")
-chem.data = read_excel("Soil_Data_Sheets_June2023.xlsx", sheet="Waypoint results")
-cn.data = read_excel("CN_Analysis_Results_Clean_May2024.xlsx")
-pom.data = read_excel("Size_Fractionation_Masses.xlsx", sheet="Samples")
-pom.data$pom = (pom.data$`Dry POM mass (g)`)/10*100
+temp.data = read.csv("Raw_Data/Soil_Temperature_June2023.csv")[,seq(1,4)]
+bd.data = read_excel("Raw_Data/Soil_Data_Sheets_June2023.xlsx", sheet="Bulk density sorted")
+chem.data = read_excel("Raw_Data/Soil_Data_Sheets_June2023.xlsx", sheet="Waypoint results")
+cn.data = read.csv("Raw_Data/TC_TOC_Results_2025.csv")
+pom.data = read.csv("Raw_Data/POM_Results_2025.csv")
 
 # split plot name column
 temp.data = temp.data %>% separate(Plot, c("Trt", "Num"), sep = 1, remove = F)
@@ -33,7 +30,8 @@ bd.data = bd.data %>% separate(Plot, c("Trt", "Num"), sep = 1, remove = F)
 chem.data = chem.data %>% separate(Plot, c("Trt", "Num"), sep = 1, remove = F)
 cn.data = cn.data %>% separate(Plot, c("Plot", "Quad"), sep = " ", remove = T)
 cn.data = cn.data %>% separate(Plot, c("Trt", "Num"), sep = 1, remove = F)
-pom.data = pom.data %>% separate(Plot, c("Trt", "Num"), sep=1, remove=F)
+pom.data = pom.data %>% separate(Plot, c("Plot", "Quad"), sep = " ", remove = T)
+pom.data = pom.data %>% separate(Plot, c("Trt", "Num"), sep = 1, remove = F)
 
 # update column names
 colnames(temp.data)[6] = "Temperature"
@@ -42,9 +40,10 @@ colnames(chem.data)[seq(9,27)] = c("Texture.Class","pH","P",
                                    "N.rel","NO3","NH4","CEC",
                                    "K.sat","Ca.sat","Mg.sat","H.sat",
                                    "K.meq","Ca.meq","Mg.meq","H.meq")
-colnames(bd.data)[c(5,6,21,22,23)] = c("Quad","Depth","Gravimetric.Moisture","Volumetric.Moisture","Bulk.Density")
-colnames(cn.data)[seq(6,8)] = c("N","C","CN")
-colnames(pom.data)[4] = "Quad"
+colnames(bd.data)[c(5,6,21,22,23)] = c("Quad","Depth","Gravimetric.Moisture",
+                                       "Volumetric.Moisture","Bulk.Density")
+colnames(cn.data)[seq(5,9)] = c("bulk.N","bulk.C","bulk.CN","ton","toc")
+colnames(pom.data)[seq(6,8)] = c("pom.mass","pon","poc")
 
 # assume second R1 Q1 is equal to R1 Q3
 bd.ind1 = which((bd.data$Plot == "R1" & bd.data$Quad == "Q1") & bd.data$Depth == "0-15")[2]
@@ -63,10 +62,23 @@ bd.sum$Volumetric.Moisture = bd.sum$mass.water/bd.sum$sum.vol
 bd.sum$Bulk.Density = bd.sum$sum.soil/bd.sum$sum.vol
 bd.sum = bd.sum[,-which(colnames(bd.sum) %in% c("mass.water","sum.soil","sum.vol"))]
 
+# estimate pom-c mass
+pom.data$poc.mass.rel = (pom.data$pom.mass/10) * pom.data$poc
+
+pom.data$index = rep(seq(1,90),2)
+ggplot(pom.data, aes(x=index, y=poc, color=Rep)) + 
+       geom_point()
+ggplot(pom.data, aes(x=index, y=pom.mass, color=Rep)) + 
+       geom_point()
+ggplot(pom.data, aes(x=index, y=poc.mass.rel, color=Rep)) + 
+       geom_point()
+
 # average the POM reps
-pom.ave = pom.data[,c("Plot","Trt","Num","Quad","Rep","pom")] %>%
+pom.ave = pom.data[,c("Plot","Trt","Num","Quad","Rep","pon","poc","poc.mass.rel")] %>%
           group_by(Plot, Trt, Num, Quad) %>%
-          summarize(pom = mean(pom))
+          summarize(pon.percent = mean(pon),
+                    poc.percent = mean(poc),
+                    poc.mass.rel = mean(poc.mass.rel))
 
 # sort chem data by treatment and quadrat
 chem.sort = sort(chem.data$Plot, index.return=T)
@@ -75,20 +87,20 @@ chem.data = chem.data[chem.sort$ix,]
 # combine bulk density, temperature, and chemical data
 soil.data = right_join(temp.data[,-which(colnames(temp.data) %in% c("Date","BD15.Starting.Depth"))], bd.sum, 
                        by=c("Plot","Trt","Num","Quad"))
-soil.data= right_join(soil.data, cn.data[,-which(colnames(cn.data) %in% c("Well"))], 
-                      by=c("Plot","Trt","Num","Quad"))
-soil.data = right_join(soil.data, chem.data, by=c("Plot","Trt","Num","Quad"))
+soil.data = right_join(soil.data, cn.data, by=c("Plot","Trt","Num","Quad"))
+soil.data = right_join(soil.data, chem.data[,-which(colnames(chem.data) %in% c("Number","Note"))], 
+                       by=c("Plot","Trt","Num","Quad"))
 soil.data = right_join(soil.data, pom.ave, by=c("Plot","Trt","Num","Quad"))
 
 # remove miscellaneous columns
-leave.out = c("Number","Note","N.rel","Texture.Class",
-              "H.sat","K.sat","Ca.sat","Mg.sat")
+leave.out = c("Texture.Class","H.sat","K.sat","Ca.sat","Mg.sat","N.rel")
 soil.data = soil.data[,-which(colnames(soil.data) %in% leave.out)]
 
 ### clean up aggregate data and add to soil dataframe
 
 # load mass data
-ag.data = read_excel("Henry County Soil and Woody Plot Sampling 2023.xlsx", sheet="Aggregate sample masses")
+ag.data = read_excel("Raw_Data/Henry County Soil and Woody Plot Sampling 2023.xlsx", 
+                     sheet="Aggregate sample masses")
 
 # update columns
 key.cols = c("Boat number","Size class","Sample number","Mass of sample w/o fragments (g)")
@@ -174,38 +186,43 @@ for (i in 1:6) { soil.data$trt.full[which(soil.data$trt == trts[i])] = trt.names
 # write all soil data at quadrat level to csv
 id.vars = c("plot","trt","trt.full","num","quad")
 soil.vars = colnames(soil.data)[-which(colnames(soil.data) %in% id.vars)]
-write.csv(soil.data[,c(id.vars,soil.vars)], "All_Soil_Data_2023.csv", row.names=F)
+write.csv(soil.data[,c(id.vars,soil.vars)], "Clean_Data/All_Soil_Data_2023.csv", row.names=F)
 
 ################################################################################
 # calculate averages at the plot level
 
+# combine toc and som data
+#plot(soil.data$som, soil.data$toc)
+lm.toc.som = lm(soil.data$toc ~ soil.data$som)
+summary(lm.toc.som)
+toc.som.ratio = as.numeric(coef(lm.toc.som)[2])
+
 # estimate SOC stocks (Mg/ha)
-soil.data$SOC.stock = 0.58 * soil.data$SOM * soil.data$Bulk.Density * 30
-soil.data$TC.stock = soil.data$C * soil.data$Bulk.Density * 30
+soil.data$poc.stock = soil.data$poc.mass.rel * soil.data$bulk.density * 30
+soil.data$soc.stock = toc.som.ratio * soil.data$som * soil.data$bulk.density * 30
+soil.data$tc.stock = soil.data$bulk.c * soil.data$bulk.density * 30
 
 # average results across plots and write to csv
-soil.aves = soil.data[,-which(colnames(soil.data) %in% leave.out)]
-soil.aves = soil.aves %>% 
-            group_by(Plot, Trt, Trt.full, Num) %>%
-            summarize(SOM = mean(SOM),
-                      SOC = mean(SOC.stock),
-                      TC = mean(TC.stock),
-                      Sand = mean(Sand),
-                      Silt = mean(Silt),
-                      Clay = mean(Clay),
-                      BD = mean(Bulk.Density),
-                      Moisture = mean(Gravimetric.Moisture),
-                      Temperature = mean(Temperature),
-                      pH = mean(pH),
-                      P = mean(P),
-                      K = mean(K),
-                      Ca = mean(Ca),
-                      Mg = mean(Mg),
-                      NO3 = mean(NO3),
-                      NH4 = mean(NH4),
-                      CEC = mean(CEC))
-colnames(soil.aves)[c(1:4)] = c("plot","trt","trt.full","num")
-write.csv(soil.aves, "Soil_Data_Averaged_by_Plot_June2023.csv", row.names=F)
+soil.aves = soil.data %>% 
+            group_by(plot, trt, trt.full, num) %>%
+            summarize(poc.stock = mean(poc.stock),
+                      soc.stock = mean(soc.stock),
+                      tc.stock = mean(tc.stock),
+                      sand = mean(sand),
+                      silt = mean(silt),
+                      clay = mean(clay),
+                      bd = mean(bulk.density),
+                      moisture = mean(gravimetric.moisture),
+                      temperature = mean(temperature),
+                      ph = mean(ph),
+                      p = mean(p),
+                      k = mean(k),
+                      ca = mean(ca),
+                      mg = mean(mg),
+                      no3 = mean(no3),
+                      nh4 = mean(nh4),
+                      cec = mean(cec))
+write.csv(soil.aves, "Clean_Data/Soil_Data_Averaged_by_Plot_June2023.csv", row.names=F)
 
 
 
