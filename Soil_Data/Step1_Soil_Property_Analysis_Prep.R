@@ -62,23 +62,11 @@ bd.sum$Volumetric.Moisture = bd.sum$mass.water/bd.sum$sum.vol
 bd.sum$Bulk.Density = bd.sum$sum.soil/bd.sum$sum.vol
 bd.sum = bd.sum[,-which(colnames(bd.sum) %in% c("mass.water","sum.soil","sum.vol"))]
 
-# estimate pom-c mass
-pom.data$poc.mass.rel = (pom.data$pom.mass/10) * pom.data$poc
-
-pom.data$index = rep(seq(1,90),2)
-ggplot(pom.data, aes(x=index, y=poc, color=Rep)) + 
-       geom_point()
-ggplot(pom.data, aes(x=index, y=pom.mass, color=Rep)) + 
-       geom_point()
-ggplot(pom.data, aes(x=index, y=poc.mass.rel, color=Rep)) + 
-       geom_point()
-
 # average the POM reps
-pom.ave = pom.data[,c("Plot","Trt","Num","Quad","Rep","pon","poc","poc.mass.rel")] %>%
+pom.ave = pom.data[,c("Plot","Trt","Num","Quad","Rep","pon","poc","pom.mass")] %>%
           group_by(Plot, Trt, Num, Quad) %>%
-          summarize(pon.percent = mean(pon),
-                    poc.percent = mean(poc),
-                    poc.mass.rel = mean(poc.mass.rel))
+          summarize(pon = mean(pon*pom.mass/10),
+                    poc = mean(poc*pom.mass/10))
 
 # sort chem data by treatment and quadrat
 chem.sort = sort(chem.data$Plot, index.return=T)
@@ -96,7 +84,7 @@ soil.data = right_join(soil.data, pom.ave, by=c("Plot","Trt","Num","Quad"))
 leave.out = c("Texture.Class","H.sat","K.sat","Ca.sat","Mg.sat","N.rel")
 soil.data = soil.data[,-which(colnames(soil.data) %in% leave.out)]
 
-### clean up aggregate data and add to soil dataframe
+### clean up aggregate data 
 
 # load mass data
 ag.data = read_excel("Raw_Data/Henry County Soil and Woody Plot Sampling 2023.xlsx", 
@@ -183,22 +171,30 @@ soil.data = right_join(soil.data, ag.wide, by=c("trt","num","quad"))
 soil.data$trt.full = rep(0, nrow(soil.data))
 for (i in 1:6) { soil.data$trt.full[which(soil.data$trt == trts[i])] = trt.names[i] }
 
-# write all soil data at quadrat level to csv
-id.vars = c("plot","trt","trt.full","num","quad")
-soil.vars = colnames(soil.data)[-which(colnames(soil.data) %in% id.vars)]
-write.csv(soil.data[,c(id.vars,soil.vars)], "Clean_Data/All_Soil_Data_2023.csv", row.names=F)
-
-################################################################################
-# calculate averages at the plot level
-
 # combine toc and som data
 #plot(soil.data$som, soil.data$toc)
 lm.toc.som = lm(soil.data$toc ~ soil.data$som)
 summary(lm.toc.som)
 toc.som.ratio = as.numeric(coef(lm.toc.som)[2])
 
+# calculate inorganic and mineral-associated organic c
+soil.data$tic = pmax(soil.data$bulk.c - soil.data$toc, 0)
+soil.data$maoc = pmax(soil.data$toc - soil.data$poc, 0)
+
+# write all soil data at quadrat level to csv
+id.vars = c("plot","trt","trt.full","num","quad")
+soil.vars = colnames(soil.data)[-which(colnames(soil.data) %in% id.vars)]
+write.csv(soil.data[,c(id.vars,soil.vars)], "Clean_Data/All_Soil_Data_2023.csv", row.names=F)
+
+plot(seq(1,90), soil.data$toc, type="n", ylim=c(0,8))
+points(seq(1,90), soil.data$toc, col="red")
+points(seq(1,90), soil.data$poc, col="blue")
+
+################################################################################
+# calculate averages at the plot level
+
 # estimate SOC stocks (Mg/ha)
-soil.data$poc.stock = soil.data$poc.mass.rel * soil.data$bulk.density * 30
+soil.data$poc.stock = soil.data$poc * soil.data$bulk.density * 30
 soil.data$soc.stock = toc.som.ratio * soil.data$som * soil.data$bulk.density * 30
 soil.data$tc.stock = soil.data$bulk.c * soil.data$bulk.density * 30
 
