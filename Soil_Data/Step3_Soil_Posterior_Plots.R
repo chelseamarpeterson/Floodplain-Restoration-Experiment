@@ -3,6 +3,7 @@ setwd(path_to_soil_folder)
 
 library(ggplot2)
 library(patchwork)
+library(RColorBrewer)
 
 ### plot Bayesian model results for all soil variables
 
@@ -16,9 +17,9 @@ df.int = read.csv("Posteriors/All_Soil_Posterior_Intervals_ChainCount5.csv")
 # print results for tables
 cbind(df.int[which(df.int$v == var.labels[6]),c("v","t")],
       round(df.int[which(df.int$v == var.labels[6]),c("mean","X5","X95")],2))
-library(RColorBrewer)
 
 # stacked plot for aggregate sizes
+t.size = 14
 ag.labs = c(">4.75 mm","2 - 4.75 mm","250 \u03bcm - 2 mm","53 - 250 \u03bcm","<53 \u03bcm")
 df.stack.ag = df.int[which(df.int$v %in% ag.labs),]
 df.stack.ag$position = rep(0, nrow(df.stack.ag))
@@ -43,7 +44,7 @@ p.ag = ggplot(df.stack.ag, aes(y=factor(t, levels=trt.names),
               labs(x="Percent of total mass (%)",
                    y="",fill="Aggregate size class") +
               scale_fill_manual(values=ag.palette) +
-              theme(text = element_text(size=12)) 
+              theme(text=element_text(size=t.size)) 
 p.ag
 
 text.labs = c("Sand (%)","Silt (%)","Clay (%)")
@@ -75,7 +76,7 @@ p.text = ggplot(df.stack.text,
                 labs(x="Percent of total mass (%)",y="", 
                      fill="Particle size class") +
                 scale_fill_manual(values=text.palette) +
-                theme(text = element_text(size=12))
+                theme(text = element_text(size=t.size))
 p.text
 
 # compare particulate organic, total organic, and total carbon
@@ -103,7 +104,7 @@ p.c = ggplot(df.stack.c[which(df.stack.c$v %in% c.labs),],
              labs(x="Concentration (% [g C/g soil])",
                   y="",fill="Fraction") + 
              scale_fill_manual(values=c.palette) +
-             theme(text = element_text(size=12))
+             theme(text = element_text(size=t.size))
 p.c
 
 # stacked plot for cation exchange
@@ -127,20 +128,20 @@ p.meq = ggplot(df.stack.meq, aes(x=mean,
                geom_label(aes(label = round(mean,1)), 
                           nudge_x = df.stack.meq$position,
                           color="white",
-                         size=2.5, show.legend = FALSE) +
+                         size=2.5, show.legend=FALSE) +
                labs(x="Contribution to base saturation (meq/100 g)",y="",
                     fill="Cation") +
                scale_fill_manual(values=meq.palette) +
-               theme(text = element_text(size=12))
+               theme(text = element_text(size=t.size))
 p.meq
 
 # combine carbon, meq, texture, & aggregate plots
-p.all = (p.c + theme(plot.margin = unit(c(0,55,0,0), "pt")) + p.meq)/(p.text+ theme(plot.margin = unit(c(0,9,0,0), "pt")) +p.ag)
+p.all = (p.c + theme(plot.margin = unit(c(0,60,0,0), "pt")) + p.meq)/(p.text+ theme(plot.margin = unit(c(0,2,0,0), "pt")) +p.ag)
 p.all
 ggsave("Figures/CEC_And_Carbon_Texture_Aggregates.jpeg", 
        plot = p.all, width = 36, height = 20, units="cm")
 
-# remainder of variables
+# plot all other chemical and physical variables
 var.set1 = c("Temperature (C)","Gravitational moisture (%)","Bulk density (g/cm3)",
              "pH","TN (%)","C:N Ratio","NH4 (ppm)",
              "NO3 (ppm)","P (ppm)","CEC (meq/100 g)")
