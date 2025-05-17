@@ -178,7 +178,8 @@ summary(lm.toc.som)
 toc.som.ratio = as.numeric(coef(lm.toc.som)[2])
 
 # calculate inorganic and mineral-associated organic c
-soil.data$tic = pmax(soil.data$bulk.c - soil.data$toc, 0)
+soil.data$bulk.c = pmax(soil.data$bulk.c, soil.data$toc)
+soil.data$tic = soil.data$bulk.c - soil.data$toc
 soil.data$maoc = pmax(soil.data$toc - soil.data$poc, 0)
 
 # write all soil data at quadrat level to csv
@@ -186,9 +187,9 @@ id.vars = c("plot","trt","trt.full","num","quad")
 soil.vars = colnames(soil.data)[-which(colnames(soil.data) %in% id.vars)]
 write.csv(soil.data[,c(id.vars,soil.vars)], "Clean_Data/All_Soil_Data_2023.csv", row.names=F)
 
-plot(seq(1,90), soil.data$toc, type="n", ylim=c(0,8))
-points(seq(1,90), soil.data$toc, col="red")
-points(seq(1,90), soil.data$poc, col="blue")
+plot(seq(1,90), soil.data$bulk.c, type="n", ylim=c(0,8))
+points(seq(1,90), soil.data$bulk.c, col="red", pch=19)
+points(seq(1,90), soil.data$toc, col="blue", pch=16)
 
 ################################################################################
 # calculate averages at the plot level

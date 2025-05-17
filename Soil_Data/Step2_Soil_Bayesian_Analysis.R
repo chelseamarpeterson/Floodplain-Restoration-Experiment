@@ -107,6 +107,8 @@ for (i in 1:n.v) {
 
 # model code w/ random effect
 soil.models2 = list()
+vars2 = c("bulk.c","toc","tic","maoc")
+var.labels2 = c("TC (%)","TOC (%)","TIC (%)","MAOM-C (%)")
 for (i in 1:n.v) {
   v = vars[i]
   m.v = ulam(alist(y ~ normal(mu, sigma),
@@ -124,7 +126,7 @@ all.samples = list()
 all.a = list()
 all.sig = list()
 for (i in 1:n.v) {
-  v = vars[i]
+  v = vars2[i]
   all.samples[[v]] = extract.samples(soil.models2[[v]])
   all.a[[v]] = exp(all.samples[[v]]$a) * all.means[[v]]
   all.sig[[v]] = exp(all.samples[[v]]$sigma) * all.means[[v]]
@@ -134,7 +136,7 @@ for (i in 1:n.v) {
 var.order = c("som","toc","tic","poc","maoc","bulk.c","bulk.n","bulk.cn",
               "temp","gmoist","bd",text.cols,"no3","nh4","p","k","ca","mg",
                meq.cols[1:3],"cec","ph",ag.cols)
-var.labels = c("SOM (%)","TOC (%)","TIC","POM-C (%)","MAOM-C (%)","TC (%)","TN (%)","C:N Ratio",
+var.labels = c("SOM (%)","TOC (%)","TIC (%)","POM-C (%)","MAOM-C (%)","TC (%)","TN (%)","C:N Ratio",
                "Temperature (C)","Gravitational moisture (%)","Bulk density (g/cm3)",
                "Sand (%)","Silt (%)","Clay (%)","NO3 (ppm)","NH4 (ppm)","P (ppm)",
                "K (ppm)","Ca (ppm)","Mg (ppm)","K (meq)","Ca (meq)","Mg (meq)",
@@ -146,16 +148,18 @@ n.v.plot = length(var.order)
 # get posterior intervals and write to file
 df.int = data.frame(matrix(nrow=0, ncol=10))
 colnames(df.int) = c("v","t","mean","sd","5","95","15","85","25","75")
-for (i in 1:n.v.plot) {
+#for (i in 1:n.v.plot) {
+for (i in 1:4) {
   df.v = data.frame(matrix(nrow=6, ncol=10))
   colnames(df.v) = c("v","t","mean","sd","5","95","15","85","25","75")
-  v = var.order[[i]]
+  #v = var.order[i]
+  v = vars2[i]
   a.means = apply(all.a[[v]], 2, mean)
   a.sds = apply(all.a[[v]], 2, sd)
   a.hpdi.90 = apply(all.a[[v]], 2, HPDI, prob=0.90)
   a.hpdi.70 = apply(all.a[[v]], 2, HPDI, prob=0.70)
   a.hpdi.50 = apply(all.a[[v]], 2, HPDI, prob=0.50)
-  df.v[1:6,"v"] = var.labels[i]
+  df.v[1:6,"v"] = var.labels2[i]
   df.v[1:6,"t"] = trt.names
   df.v[1:6,"mean"] = a.means
   df.v[1:6,"sd"] = a.sds
@@ -165,7 +169,8 @@ for (i in 1:n.v.plot) {
   df.v[1:6,"85"] = a.hpdi.70[2,]
   df.v[1:6,"25"] = a.hpdi.50[1,]
   df.v[1:6,"75"] = a.hpdi.50[2,]
-  df.int = rbind(df.int, df.v)
+  df.int[which(df.int$v == var.labels2[i]),] = df.v
+  #df.int = rbind(df.int, df.v)
 }
 write.csv(df.int, "Posteriors/All_Soil_Posterior_Intervals_ChainCount5.csv", row.names=F)
 
