@@ -5,7 +5,8 @@ library(ggplot2)
 library(patchwork)
 library(RColorBrewer)
 
-### plot Bayesian model results for all soil variables
+################################################################################
+### plot Bayesian model results for soil properties
 
 # treatment names
 trts = c("A","B","C","D","E","R")
@@ -18,7 +19,10 @@ df.int = read.csv("Posteriors/All_Soil_Posterior_Intervals_ChainCount5.csv")
 cbind(df.int[which(df.int$v == var.labels[6]),c("v","t")],
       round(df.int[which(df.int$v == var.labels[6]),c("mean","X5","X95")],2))
 
-# stacked plot for aggregate sizes
+################################################################################
+### make combined plot for CEC, carbon fractions, texture, and aggregates
+
+# stacked plot for aggregate size distribution
 t.size = 14
 ag.labs = c(">4.75 mm","2 - 4.75 mm","250 \u03bcm - 2 mm","53 - 250 \u03bcm","<53 \u03bcm")
 df.stack.ag = df.int[which(df.int$v %in% ag.labs),]
@@ -47,6 +51,7 @@ p.ag = ggplot(df.stack.ag, aes(y=factor(t, levels=trt.names),
               theme(text=element_text(size=t.size)) 
 p.ag
 
+# stacked plot for particle size distribution
 text.labs = c("Sand (%)","Silt (%)","Clay (%)")
 df.stack.text = df.int[which(df.int$v %in% text.labs),]
 df.stack.text$position = rep(0, nrow(df.stack.text))
@@ -79,7 +84,7 @@ p.text = ggplot(df.stack.text,
                 theme(text = element_text(size=t.size))
 p.text
 
-# compare particulate organic, total organic, and total carbon
+# stacked plot for carbon fractions
 c.labs = c("TIC (%)","POM-C (%)","MAOM-C (%)")
 df.stack.c = df.int[which(df.int$v %in% c.labs),]
 df.stack.c$position = rep(0, nrow(df.stack.c))
@@ -102,7 +107,7 @@ p.c = ggplot(df.stack.c[which(df.stack.c$v %in% c.labs),],
                         color="white",#fill="white",
                         size=2.5, show.legend = FALSE) +
              labs(x="Concentration (% [g C/g soil])",
-                  y="",fill="Fraction") + 
+                  y="",fill="Soil carbon fraction") + 
              scale_fill_manual(values=c.palette) +
              theme(text = element_text(size=t.size))
 p.c
@@ -129,7 +134,7 @@ p.meq = ggplot(df.stack.meq, aes(x=mean,
                           nudge_x = df.stack.meq$position,
                           color="white",
                          size=2.5, show.legend=FALSE) +
-               labs(x="Contribution to base saturation (meq/100 g)",y="",
+               labs(x="Contribution to CEC (meq/100 g)",y="",
                     fill="Cation") +
                scale_fill_manual(values=meq.palette) +
                theme(text = element_text(size=t.size))
@@ -139,56 +144,35 @@ p.meq
 p.all = (p.c + theme(plot.margin = unit(c(0,60,0,0), "pt")) + p.meq)/(p.text+ theme(plot.margin = unit(c(0,2,0,0), "pt")) +p.ag)
 p.all
 ggsave("Figures/CEC_And_Carbon_Texture_Aggregates.jpeg", 
-       plot = p.all, width = 36, height = 20, units="cm")
+       plot = p.all, width = 36, height = 18, units="cm")
 
+################################################################################
 # plot all other chemical and physical variables
-var.set1 = c("Temperature (C)","Gravitational moisture (%)","Bulk density (g/cm3)",
-             "pH","TN (%)","C:N Ratio","NH4 (ppm)",
-             "NO3 (ppm)","P (ppm)","CEC (meq/100 g)")
-ggplot(df.int[which(df.int$v %in% var.set1),], 
-       aes(y=factor(t, levels=trt.names), x=mean)) + 
-        geom_errorbar(aes(xmin=`X5`, xmax=`X95`), 
-                      width=0.25, color="black", 
-                      position=position_dodge(width=0.5)) +
-        geom_errorbar(aes(xmin=`X25`, xmax=`X75`), 
-                      width=0.25, color="blue", 
-                      position=position_dodge(width=0.5)) +
-        geom_point(position=position_dodge(width=0.5)) +
-        facet_wrap(.~factor(v, levels=var.set1), 
-                   scales="free_x", ncol=3) +
-        theme(panel.spacing.x = unit(0.4, "cm")) +
-        labs(y="",x="") + theme(text = element_text(size=12))
 
-leave.out = c("Mean-weight diameter (mm)")
-chem.vars = var.labels[-which(var.labels %in% c(text.labs, ag.labs[1:6],leave.out))]
-df.chem = df.int[which(df.int$v %in% chem.vars),]
-ggplot(df.chem, aes(y=factor(t, levels=trt.names), x=mean)) + 
-      geom_errorbar(aes(xmin=`X5`, xmax=`X95`), 
-                    width=0.25, color="black", 
-                    position=position_dodge(width=0.5)) +
-      geom_errorbar(aes(xmin=`X25`, xmax=`X75`), 
-                    width=0.25, color="blue", 
-                    position=position_dodge(width=0.5)) +
-      geom_point(position=position_dodge(width=0.5)) +
-      facet_wrap(.~factor(v, levels=chem.vars), scales="free_x", ncol=4) +
-      theme(panel.spacing.x = unit(0.4, "cm")) +
-      labs(y="",x="")
-
-## plot all posteriors
-ggplot(df.int, 
-       aes(x=mean,
-           y=factor(t, levels=trt.names))) + 
-       geom_errorbar(aes(xmin=`5`, xmax=`95`), 
-                     width=0.25, color="black", 
-                     position=position_dodge(width=0.5)) +
-       geom_errorbar(aes(xmin=`25`, xmax=`75`),
-                     width=0.25, color="blue", 
-                     position=position_dodge(width=0.5)) +
-       geom_point(position=position_dodge(width=0.5)) +
-       facet_wrap(.~factor(v, levels=var.labels), 
-                  scales="free_x", ncol=4) +
-       theme(panel.spacing.x = unit(0.4, "cm")) +
-       labs(y="",x="")
+# points with whiskers
+vars = c("Temperature (C)","Gravitational moisture (%)","Bulk density (g/cm3)",
+         "pH","C:N Ratio","TN (%)","NO3 (ppm)","NH4 (ppm)","P (ppm)")
+var.labels = c("Temperature (C)","Gravitational moisture (%)","Bulk density (g/cm3)",
+               "pH","C:N Ratio","Total N (%)","NO3-N (ppm)","NH4-N (ppm)","P (ppm)")
+df.plot = df.int[which(df.int$v %in% vars),]
+df.plot$lab = rep(0, nrow(df.plot))
+for (i in 1:length(vars)) { df.plot$lab[which(df.plot$v == vars[i])] = var.labels[i] }
+p.chem.phys = ggplot(df.plot, 
+                     aes(y=factor(t, levels=trt.names), x=mean)) + 
+                         geom_errorbar(aes(xmin=`X5`, xmax=`X95`), 
+                                       width=0.25, color="black", 
+                                       position=position_dodge(width=0.5)) +
+                         geom_errorbar(aes(xmin=`X25`, xmax=`X75`), 
+                                       width=0.25, color="blue", 
+                                       position=position_dodge(width=0.5)) +
+                         geom_point(position=position_dodge(width=0.5)) +
+                         facet_wrap(.~factor(lab, levels=var.labels), 
+                                    scales="free_x", ncol=3) +
+                         theme(panel.spacing.x = unit(0.4, "cm")) +
+                         labs(y="",x="Posterior estimate") + 
+                         theme(text = element_text(size=12))
+ggsave("Figures/Nutrients_BD_Temp_Moisture_pH.jpeg", 
+       plot = p.chem.phys, width = 18, height = 16, units="cm")
 
 ## plot continuous distributions
 new.df = all.a[["som"]]
@@ -210,7 +194,7 @@ for (i in 2:n.v.plot) {
 
 all.melt$var = factor(all.melt$var, levels=var.labels)
 ggplot(all.melt, aes(x=value, fill=trt)) + 
-  geom_density(alpha=0.5, linewidth=0.2) + 
-  facet_wrap(.~var, scales = "free") +
-  labs(y="Density",x="") + 
-  theme(legend.title=element_blank())
+       geom_density(alpha=0.5, linewidth=0.2) + 
+       facet_wrap(.~var, scales = "free") +
+       labs(y="Density",x="") + 
+       theme(legend.title=element_blank())
