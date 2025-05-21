@@ -5,28 +5,35 @@ setwd(path_to_repo)
 trts = c("A","B","C","D","E","R")
 
 ## read in woody biomass/debris and understory C stock data
-all.bm.data = read.csv("Tree_Analysis/Clean_Data/All_Vegetation_C_Stocks_By_Plot.csv")
+c.data = read.csv("Tree_Analysis/Clean_Data/All_Vegetation_C_Stocks_By_Plot.csv")
 
 ## read in soil data
-setwd(path_to_repo)
-ave.soil.data = read.csv("Soil_Data/Soil_Data_Averaged_by_Plot_June2023.csv", header=T)
-all.bm.data = right_join(all.bm.data, 
-                         ave.soil.data[,c("trt","trt.full","num","SOC","TC")], 
-                         by=c("trt","trt.full","num"))
+soil.data = read.csv("Soil_Analysis/Clean_Data/Soil_Data_Averaged_by_Plot_June2023.csv", header=T)
+
+# update soil data column names
+soil.c.data = soil.data[,c("trt","trt.full","num","maoc.stock","poc.stock","soc.stock","tic.stock","tc.stock")]
+colnames(soil.c.data)[4:8] = c("MAOM-C","POM-C","SOC","TIC","TC")
+
+## join vegetation and soil c stocks
+c.data = right_join(c.data, 
+                    soil.c.data[,c("trt","trt.full","num","MAOM-C","POM-C","SOC","TIC","TC")], 
+                    by=c("trt","trt.full","num"))
 
 ## read in species richness data
 
 # herbaceous species data
 sp.richness.df = read.csv("Understory_Data/Species_Richness_by_Plot_and_Year.csv")
 
-# average richness by year
-sp.aves = sp.richness.df %>% 
+# average richness for 2022 to be consistent with biomass data
+sp.aves = sp.richness.df[which(sp.richness.df$Year == 2022),] %>% 
           group_by(Trt, Num) %>% 
           summarize(N = mean(N))
 colnames(sp.aves) = c("trt","num","N.herb")
 
-# tree species data
+## read in tree species data
 C.stock.sp.df = read.csv("Tree_Analysis/Clean_Data/WoodyBiomass_C_Stocks_By_Species.csv", header=T)
+
+# get data for 2022
 C.stock.sp.df.2022 = C.stock.sp.df[which(C.stock.sp.df$year == 2022),]
 
 # make dataframe for unique tree species
@@ -45,11 +52,12 @@ for (t in 1:n.t) {
 }
 
 # add richness values to biomass data frame
-all.bm.data$num = as.numeric(all.bm.data$num)
+c.data$num = as.numeric(c.data$num)
 n.tree.sp.df$num = as.numeric(n.tree.sp.df$num)
 n.tree.sp.df$N.tree = as.numeric(n.tree.sp.df$N.tree)
-all.bm.data = right_join(all.bm.data, sp.aves, by=c("trt","num"))
-all.bm.data = right_join(all.bm.data, n.tree.sp.df, by=c("trt","num"))
+c.data = right_join(c.data, sp.aves, by=c("trt","num"))
+c.data = right_join(c.data, n.tree.sp.df, by=c("trt","num"))
+
 
 # write data to file
-write.csv(all.bm.data, "Tree_Analysis/Clean_Data/Clean_Cstocks_Richness.csv", row.names=F)
+write.csv(c.data, "Tree_Analysis/Clean_Data/Clean_Veg_Soil_Cstocks_Richness.csv", row.names=F)

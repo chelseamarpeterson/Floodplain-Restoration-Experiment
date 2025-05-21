@@ -1,4 +1,4 @@
-path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Soil_Data"
+path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Soil_Analysis"
 setwd(path_to_soil_folder)
 
 library(ggplot2)
@@ -187,23 +187,24 @@ id.vars = c("plot","trt","trt.full","num","quad")
 soil.vars = colnames(soil.data)[-which(colnames(soil.data) %in% id.vars)]
 write.csv(soil.data[,c(id.vars,soil.vars)], "Clean_Data/All_Soil_Data_2023.csv", row.names=F)
 
-plot(seq(1,90), soil.data$bulk.c, type="n", ylim=c(0,8))
-points(seq(1,90), soil.data$bulk.c, col="red", pch=19)
-points(seq(1,90), soil.data$toc, col="blue", pch=16)
-
 ################################################################################
 # calculate averages at the plot level
 
+
 # estimate SOC stocks (Mg/ha)
+soil.data$tic.stock = soil.data$tic * soil.data$bulk.density * 30
+soil.data$maoc.stock = soil.data$maoc * soil.data$bulk.density * 30
 soil.data$poc.stock = soil.data$poc * soil.data$bulk.density * 30
-soil.data$soc.stock = toc.som.ratio * soil.data$som * soil.data$bulk.density * 30
+soil.data$soc.stock = soil.data$toc * soil.data$bulk.density * 30
 soil.data$tc.stock = soil.data$bulk.c * soil.data$bulk.density * 30
 
 # average results across plots and write to csv
 soil.aves = soil.data %>% 
             group_by(plot, trt, trt.full, num) %>%
-            summarize(poc.stock = mean(poc.stock),
+            summarize(maoc.stock = mean(maoc.stock),
+                      poc.stock = mean(poc.stock),
                       soc.stock = mean(soc.stock),
+                      tic.stock = mean(tic.stock),
                       tc.stock = mean(tc.stock),
                       sand = mean(sand),
                       silt = mean(silt),
@@ -221,6 +222,14 @@ soil.aves = soil.data %>%
                       cec = mean(cec))
 write.csv(soil.aves, "Clean_Data/Soil_Data_Averaged_by_Plot_June2023.csv", row.names=F)
 
+# compare toc and som
+plot(soil.data$som, soil.data$toc, xlim=c(2,8.5), ylim=c(2,8.5))
+lines(seq(2,8.5,by=0.1),1.0814+0.5*seq(2,8.5,by=0.1))
+summary(lm(toc~som - 1, data=soil.data))
 
 
-
+hist(soil.data$bulk.c)
+hist(soil.data$toc)
+plot(seq(1,90),soil.data$bulk.c,type="n")
+points(seq(1,90),soil.data$bulk.c,col="red")
+points(seq(1,90),soil.data$toc,col="blue")
