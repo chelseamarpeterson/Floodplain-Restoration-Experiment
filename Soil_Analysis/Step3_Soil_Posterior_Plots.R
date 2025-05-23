@@ -19,6 +19,13 @@ df.int = read.csv("Posteriors/All_Soil_Posterior_Intervals_ChainCount5.csv")
 cbind(df.int[which(df.int$v == var.labels[6]),c("v","t")],
       round(df.int[which(df.int$v == var.labels[6]),c("mean","X5","X95")],2))
 
+ggplot(df.int, aes(y=factor(t, levels=trt.names), 
+                   x=mean)) + 
+       geom_errorbarh(aes(xmin=X5, xmax=X95), color="black") +
+       geom_errorbarh(aes(xmin=X25, xmax=X75), color="blue") +
+       geom_point() + 
+       facet_wrap(.~v, scales="free_x",ncol=5)
+
 ################################################################################
 ### make combined plot for CEC, carbon fractions, texture, and aggregates
 
