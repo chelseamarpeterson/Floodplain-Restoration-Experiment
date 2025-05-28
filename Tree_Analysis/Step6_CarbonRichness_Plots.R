@@ -67,11 +67,12 @@ TC.est.df$`IPCC total organic C` = c("Restored forested wetland","Mature foreste
 TC.est.df$value = c(132.5, 180.1)
 
 # total ecosystem
-stack.vars1 = c("TIC","Total dead vegetation","TOC","Total live vegetation")
+stack.vars1 = c("Carbonates","Total dead vegetation","TOC","Total live vegetation")
 v.palette <- brewer.pal(11,"RdYlGn")[c(7,9,11)]
 s.palette <- c(brewer.pal(9,"Greys")[5],
                brewer.pal(11,"BrBG")[c(2,1)])
 d.palette <- brewer.pal(9,"YlOrBr")[seq(3,8)]
+ipcc.vars1 = c("Restored forested wetland","Mature forested wetland")
 p1 = ggplot(int.df[which(int.df$var %in% stack.vars1),], 
             aes(y=factor(trt, levels=trt.names), x=mean, 
                 fill=factor(var, levels=stack.vars1))) +
@@ -79,13 +80,18 @@ p1 = ggplot(int.df[which(int.df$var %in% stack.vars1),],
             labs(fill="",y="",
                  x="Posterior mean (Mg/ha)",title="") +
             geom_vline(data=TC.est.df, aes(xintercept=value, 
-                                           color=`IPCC total organic C`,
-                                           linetype=`IPCC total organic C`), 
+                                           color=factor(`IPCC total organic C`,levels=ipcc.vars1),
+                                           linetype=factor(`IPCC total organic C`,levels=ipcc.vars1)), 
                        linewidth=1) +
-            scale_color_manual(values=c("blue","red")) +
-            scale_linetype_manual(values=c("dashed","solid")) +
+            scale_color_manual(values=c("red","blue")) +
+            scale_linetype_manual(values=c("solid","dashed")) +
             scale_fill_manual(values=c(brewer.pal(9,"Greys")[5],d.palette[4],s.palette[3],v.palette[3]),
-                              labels=c("Carbonates","Litter and woody debris","Soil organic matter","Living biomass")) +
+                              labels=c("Carbonates",
+                                       "Litter and woody debris",
+                                       "Soil organic matter",
+                                       "Living biomass")) +
+            guides(color=guide_legend(title="IPCC total organic C"),
+                   linetype=guide_legend(title="IPCC total organic C")) +
             theme(text=element_text(size=14), legend.key.size=unit(0.7,'cm'))
 p1
 
@@ -137,7 +143,7 @@ p3
 
 # soil plot
 stack.vars4 = c("Carbonates","POM-C (\u2265 53 \U00B5m)","MAOM-C (< 53 \U00B5m)")
-ipcc.vars4 = c("Natural wetland","Revegetated cropland","Annual crops")
+ipcc.vars4 = c("Annual crops","Revegetated cropland","Natural wetland")
 p4 = ggplot(int.df[which(int.df$var %in% stack.vars4),], 
             aes(y=factor(trt, levels=trt.names), 
                 x=mean, fill=factor(var, levels=stack.vars4))) +
@@ -150,8 +156,8 @@ p4 = ggplot(int.df[which(int.df$var %in% stack.vars4),],
                            color=factor(`IPCC SOC`,levels=ipcc.vars4),
                            linetype=factor(`IPCC SOC`,levels=ipcc.vars4)), 
                        linewidth=1) +
-            scale_color_manual(values=c("blue","purple","red")) + 
-            scale_linetype_manual(values=c("dashed","dotted","solid")) +
+            scale_color_manual(values=c("red","magenta2","blue")) + 
+            scale_linetype_manual(values=c("solid","dotted","dashed")) +
             guides(color=guide_legend(title="IPCC soil organic carbon"),
                    linetype=guide_legend(title="IPCC soil organic carbon")) +
             theme(text=element_text(size=14), legend.key.size=unit(0.7,'cm'))
