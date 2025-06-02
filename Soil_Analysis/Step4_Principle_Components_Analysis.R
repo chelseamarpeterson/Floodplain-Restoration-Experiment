@@ -37,7 +37,7 @@ colnames(df)[6:40] = c("Temp","Moisture","BD","TN","TC","CN","TOC",
                               "MB","PAB","HJB")
 
 # run PCA
-PCA = prcomp(~ TIC+POC+MAOC+CN+MWD+CEC+Sand+Clay+pH+P+K+Ca+Mg+NO3+NH4+BD+Moisture+Temp+HL+FWD+MB+PAB+HJB,
+PCA = prcomp(~ TIC+POC+MAOC+CN+MWD+CEC+Sand+Clay+pH+P+K+Ca+Mg+TN+NO3+NH4+BD+Moisture+Temp+HL+FWD+MB+PAB+HJB,
                  data=df, scale=T, center=T)
 
 # plot PCA with autoplot
@@ -49,6 +49,17 @@ autoplot(PCA, x=1, y=2, data=df,
          loadings.label.vjust = -0.15, loadings.label.hjust = 0.1) +
          labs(color="Treatment", shape="Plot")
 
+autoplot(PCA, x=1, y=3, data=df, 
+         loadings=T, loadings.label=T, size=4, loadings.label.colour='black',
+         col="trt.full", shape="num", loadings.label.size=4, 
+         loadings.label.vjust = -0.15, loadings.label.hjust = 0.1) +
+  labs(color="Treatment", shape="Plot")
+
+autoplot(PCA, x=1, y=4, data=df, 
+         loadings=T, loadings.label=T, size=4, loadings.label.colour='black',
+         col="trt.full", shape="num", loadings.label.size=4, 
+         loadings.label.vjust = -0.15, loadings.label.hjust = 0.1) +
+         labs(color="Treatment", shape="Plot")
 
 # look at rotation vectors
 summary(PCA)
@@ -72,15 +83,15 @@ round(cumsum(eigenvalues/sum(eigenvalues)*100),2)
 PCAloadings <- data.frame(Variables = rownames(PCA$rotation), PCA$rotation)
 
 # add PCA scores to the dataset
-df[, c('PC1', 'PC2')] = PCA$x[, 1:2]
+df[, c('PC1','PC2','PC3')] = PCA$x[, 1:3]
 
 # save variable loadings in a separate dataset
-rot = as.data.frame(PCA$rotation[, 1:2])
+rot = as.data.frame(PCA$rotation[, 1:3])
 rot$var = rownames(PCA$rotation)
 
 # rescale the loadings to fit nicely within the scatterplot of our data
-mult = max(abs(df[, c('PC1', 'PC2')])) / max(abs(rot[, 1:2])) / 2
-rot[, 1:2] = rot[, 1:2] * mult
+mult = max(abs(df[, c('PC1','PC2','PC3')])) / max(abs(rot[, 1:3])) / 2
+rot[, 1:3] = rot[, 1:3] * mult
 
 # make plot
 p1 = ggplot(data=rot, 
@@ -90,14 +101,28 @@ p1 = ggplot(data=rot,
        geom_segment(color='red', arrow=arrow(length=unit(0.03,"npc"))) +
        geom_label_repel(aes(PC1 * 1.001, PC2 * 1.001)) +
        theme_bw() + labs(color="Treatment", shape="Plot") +
-       theme(panel.grid = element_blank()) +
        scale_y_continuous(limits=c(-4,4)) + 
        scale_x_continuous(limits=c(-4,4)) + 
-       labs(x="PC1 (17.4%)",y="PC2 (13.1%)")
+       labs(x="PC1 (16.8%)",y="PC2 (12.6%)") +
+       theme(text = element_text(size=14),
+             panel.grid = element_blank(),legend.position='none')
+p2 = ggplot(data=rot, 
+            aes(x=0, y=0, xend=PC1, yend=PC3, label=var)) +
+      geom_point(data=df, aes(x=PC1, y=PC3, color=trt.full, shape=num), 
+                 inherit.aes=FALSE, size=3) +
+      geom_segment(color='red', arrow=arrow(length=unit(0.03,"npc"))) +
+      geom_label_repel(aes(PC1 * 1.001, PC3 * 1.001)) +
+      theme_bw() + labs(color="Treatment", shape="Plot") +
+      scale_y_continuous(limits=c(-4,4)) + 
+      scale_x_continuous(limits=c(-4,4)) + 
+      labs(x="PC1 (16.8%)",y="PC3 (10.7%)") +
+      theme(text = element_text(size=14),
+            panel.grid = element_blank())
+p3 = p1 + p2
 
 # write plot
-ggsave("Figures/Soil_Vegetation_PCA.jpeg", 
-       plot = p1, width = 20, height = 14, units="cm")
+ggsave("Figures/Figure5_Soil_Vegetation_PCA.jpeg", 
+       plot = p3, width = 34, height = 14, units="cm")
 
 
 

@@ -12,6 +12,15 @@ library(RColorBrewer)
 trts = c("A","B","C","D","E","R")
 trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
 
+# variable labels
+var.labels = c("SOM (%)","TOC (%)","TIC (%)","POM-C (%)","MAOM-C (%)","TC (%)","TN (%)","C:N Ratio",
+               "Temperature (C)","Gravitational moisture (%)","Bulk density (g/cm3)",
+               "Sand (%)","Silt (%)","Clay (%)","NO3 (ppm)","NH4 (ppm)","P (ppm)",
+               "K (ppm)","Ca (ppm)","Mg (ppm)","K (meq)","Ca (meq)","Mg (meq)",
+               "CEC (meq/100 g)","pH","Floating POM",
+               ">4.75 mm","2 - 4.75 mm","250 \u03bcm - 2 mm","53 - 250 \u03bcm",
+               "<53 \u03bcm","Mean-weight diameter (mm)")
+
 # read in HPDIs
 df.int = read.csv("Posteriors/All_Soil_Posterior_Intervals_ChainCount5.csv")
 
