@@ -1,10 +1,13 @@
-path_to_repo = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo"
+#path_to_repo = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo"
+path_to_repo = "C:/Users/cmptrsn2/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo"
 setwd(path_to_repo)
 
 library(ggplot2)
 library(ggfortify)
 library(patchwork)
 library(ggrepel)
+library(tidyr)
+library(dplyr)
 
 # treatment names
 trts = c("A","B","C","D","E","R")
@@ -55,7 +58,7 @@ autoplot(PCA, x=1, y=3, data=df,
          loadings.label.vjust = -0.15, loadings.label.hjust = 0.1) +
   labs(color="Treatment", shape="Plot")
 
-autoplot(PCA, x=1, y=4, data=df, 
+autoplot(PCA, x=2, y=3, data=df, 
          loadings=T, loadings.label=T, size=4, loadings.label.colour='black',
          col="trt.full", shape="num", loadings.label.size=4, 
          loadings.label.vjust = -0.15, loadings.label.hjust = 0.1) +

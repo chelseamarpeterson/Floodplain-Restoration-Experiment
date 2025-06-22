@@ -1,4 +1,4 @@
-path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Soil_Data"
+path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Soil_Analysis"
 setwd(path_to_soil_folder)
 
 library(rethinking)
@@ -58,11 +58,14 @@ for (t in 1:6) {
   }
 }
 
+# add maoc:poc ratio
+soil.dat$maoc_poc = soil.dat$maoc/soil.dat$poc
+
 # make simple list for Bayes analysis
 vars = c("som","bulk.n","bulk.c","bulk.cn","toc","poc","tic","maoc",
          "temp","gmoist","vmoist","bd",
          "ph","p","k","ca","mg","no3","nh4","cec",
-         text.cols,meq.cols[1:3],ag.cols) 
+         text.cols,meq.cols[1:3],ag.cols,"maoc_poc") 
 n.v = length(vars)
 all.lists = list()
 all.means = list()
@@ -126,7 +129,7 @@ all.samples = list()
 all.a = list()
 all.sig = list()
 for (i in 1:n.v) {
-  v = vars2[i]
+  v = vars[i]
   all.samples[[v]] = extract.samples(soil.models2[[v]])
   all.a[[v]] = exp(all.samples[[v]]$a) * all.means[[v]]
   all.sig[[v]] = exp(all.samples[[v]]$sigma) * all.means[[v]]
@@ -135,31 +138,29 @@ for (i in 1:n.v) {
 # variable labels
 var.order = c("som","toc","tic","poc","maoc","bulk.c","bulk.n","bulk.cn",
               "temp","gmoist","bd",text.cols,"no3","nh4","p","k","ca","mg",
-               meq.cols[1:3],"cec","ph",ag.cols)
+               meq.cols[1:3],"cec","ph",ag.cols,"maoc_poc")
 var.labels = c("SOM (%)","TOC (%)","TIC (%)","POM-C (%)","MAOM-C (%)","TC (%)","TN (%)","C:N Ratio",
                "Temperature (C)","Gravitational moisture (%)","Bulk density (g/cm3)",
                "Sand (%)","Silt (%)","Clay (%)","NO3 (ppm)","NH4 (ppm)","P (ppm)",
                "K (ppm)","Ca (ppm)","Mg (ppm)","K (meq)","Ca (meq)","Mg (meq)",
                "CEC (meq/100 g)","pH","Floating POM",
                ">4.75 mm","2 - 4.75 mm","250 \u03bcm - 2 mm","53 - 250 \u03bcm",
-               "<53 \u03bcm","Mean-weight diameter (mm)")
+               "<53 \u03bcm","Mean-weight diameter (mm)","MAOC:POC ratio")
 n.v.plot = length(var.order)
 
 # get posterior intervals and write to file
 df.int = data.frame(matrix(nrow=0, ncol=10))
 colnames(df.int) = c("v","t","mean","sd","5","95","15","85","25","75")
-#for (i in 1:n.v.plot) {
-for (i in 1:4) {
+for (i in 1:n.v.plot) {
   df.v = data.frame(matrix(nrow=6, ncol=10))
   colnames(df.v) = c("v","t","mean","sd","5","95","15","85","25","75")
-  #v = var.order[i]
-  v = vars2[i]
+  v = var.order[i]
   a.means = apply(all.a[[v]], 2, mean)
   a.sds = apply(all.a[[v]], 2, sd)
   a.hpdi.90 = apply(all.a[[v]], 2, HPDI, prob=0.90)
   a.hpdi.70 = apply(all.a[[v]], 2, HPDI, prob=0.70)
   a.hpdi.50 = apply(all.a[[v]], 2, HPDI, prob=0.50)
-  df.v[1:6,"v"] = var.labels2[i]
+  df.v[1:6,"v"] = var.labels[i]
   df.v[1:6,"t"] = trt.names
   df.v[1:6,"mean"] = a.means
   df.v[1:6,"sd"] = a.sds
@@ -169,11 +170,14 @@ for (i in 1:4) {
   df.v[1:6,"85"] = a.hpdi.70[2,]
   df.v[1:6,"25"] = a.hpdi.50[1,]
   df.v[1:6,"75"] = a.hpdi.50[2,]
-  df.int[which(df.int$v == var.labels2[i]),] = df.v
-  #df.int = rbind(df.int, df.v)
+  #df.int[which(df.int$v == var.labels2[i]),] = df.v
+  df.int = rbind(df.int, df.v)
 }
 write.csv(df.int, "Posteriors/All_Soil_Posterior_Intervals_ChainCount5.csv", row.names=F)
 
+ggplot(df.int, aes(y=t, x=mean)) + 
+       geom_point() +
+       geom_errorbarh(aes(y=t, xmin=`5`, xmax=`95`))
 #### compare WAIC and PSIS for all soil variables
 #df.waic = data.frame(matrix(nrow=0, ncol=8))
 #df.psis = data.frame(matrix(nrow=0, ncol=8))

@@ -59,6 +59,7 @@ set.seed(12)
 m.all = list()
 for (i in 1:n.v) {
   v = vars[i]
+  print(v)
   m.all[[v]] = ulam(alist(y ~ dnorm(mu, sigma),
                           log(mu) <- a[tid],
                           a[tid] ~ dnorm(0, 1),
@@ -85,7 +86,8 @@ var.order = c("n.total","N.herb","N.tree",
               "live.woody.c.stock","live.stem.carbon",
               "FWD.C.Mg.ha","HL.C.Mg.ha","total.C.Mg.ha",
               "total.live.carbon","total.dead.carbon",
-              "total.veg.carbon","total.ecosystem.carbon")
+              "total.veg.carbon","total.ecosystem.carbon",
+              "FWD.CN.ratio","HL.CN.ratio","herb.bm.CN.ratio")
 var.labels = c("Total richness","Herbaceous species","Tree species",
                "MAOM-C (< 53 \U00B5m)","POM-C (\u2265 53 \U00B5m)",
                "TOC","Carbonates","TC",
@@ -94,7 +96,9 @@ var.labels = c("Total richness","Herbaceous species","Tree species",
                "Live trees (\u2265 2.5 cm)","Live stems (< 2.5 cm)",
                "Fine woody debris (< 2.5 cm)","Herbaceous litter","Herbaceous biomass",
                "Total live vegetation","Total dead vegetation",
-               "Total vegetation","Total ecosystem")
+               "Total vegetation","Total ecosystem",
+               "Fine woody debris (< 2.5 cm) C:N ratio",
+               "Herbaceous litter C:N ratio","Herbaceous biomass C:N ratio")
 
 # extract posterior samples and create dataframes
 all.samples = list()

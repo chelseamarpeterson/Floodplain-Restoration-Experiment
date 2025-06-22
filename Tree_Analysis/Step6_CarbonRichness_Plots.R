@@ -21,7 +21,8 @@ var.order = c("n.total","N.herb","N.tree",
               "live.woody.c.stock","live.stem.carbon",
               "FWD.C.Mg.ha","HL.C.Mg.ha","total.C.Mg.ha",
               "total.live.carbon","total.dead.carbon",
-              "total.veg.carbon","total.ecosystem.carbon")
+              "total.veg.carbon","total.ecosystem.carbon",
+              "FWD.CN.ratio","HL.CN.ratio","herb.bm.CN.ratio")
 var.labels = c("Total richness","Herbaceous species","Tree species",
                "MAOM-C (< 53 \U00B5m)","POM-C (\u2265 53 \U00B5m)",
                "TOC","Carbonates","TC",
@@ -30,7 +31,9 @@ var.labels = c("Total richness","Herbaceous species","Tree species",
                "Live trees (\u2265 2.5 cm)","Live stems (< 2.5 cm)",
                "Fine woody debris (< 2.5 cm)","Herbaceous litter","Herbaceous biomass",
                "Total live vegetation","Total dead vegetation",
-               "Total vegetation","Total ecosystem")
+               "Total vegetation","Total ecosystem",
+               "Fine woody debris (< 2.5 cm) C:N ratio",
+               "Herbaceous litter C:N ratio","Herbaceous biomass C:N ratio")
 
 # plot intervals for all variables
 ggplot(int.df, aes(y=factor(trt, levels=trt.names), x=mean)) +
@@ -185,7 +188,21 @@ setwd(path_to_repo)
 ggsave("Figures/Richness.jpeg", 
        plot = p.r, width = 20, height = 12, units="cm")
 
+# comparing biomass C:N ratios
+cn.vars = c("Fine woody debris (< 2.5 cm) C:N ratio",
+            "Herbaceous litter C:N ratio","Herbaceous biomass C:N ratio")
+p.cn = ggplot(int.df[int.df$var %in% cn.vars,], 
+       aes(y=factor(trt, levels=trt.names), x=mean)) +
+       geom_errorbar(aes(xmin=X5, xmax=X95), width=0.25, color="black") +
+       geom_errorbar(aes(xmin=X25, xmax=X75), width=0.25, color="blue") +
+       geom_point() + labs(y="",x="Posterior estimate") +
+       facet_wrap(.~factor(var, levels=var.labels), 
+                   ncol=3, scales="free_x") + 
+       theme(text = element_text(size=12))
 
+ggsave("Figures/CNratio.jpeg", 
+       plot = p.cn, width = 23, 
+       height = 7, units="cm")
 
 ################################################################################
 ### run PCA on biomass data
