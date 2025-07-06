@@ -38,9 +38,10 @@ colnames(df)[6:40] = c("Temp","Moisture","BD","TN","TC","CN","TOC",
                               "NO3","NH4","CEC","POC",ag.cols,"TIC",
                               "MAOC","HB","HL","FWD",
                               "MB","PAB","HJB")
+colnames(df)[12] = "SOC"
 
 # run PCA
-PCA = prcomp(~ TIC+POC+MAOC+CN+MWD+CEC+Sand+Clay+pH+P+K+Ca+Mg+TN+NO3+NH4+BD+Moisture+Temp+HL+FWD+MB+PAB+HJB,
+PCA = prcomp(~ TIC+SOC+POC+CN+MWD+CEC+Sand+Clay+pH+P+K+Ca+Mg+TN+NO3+NH4+BD+Moisture+Temp+HL+FWD+MB+PAB+HJB,
                  data=df, scale=T, center=T)
 
 # plot PCA with autoplot
@@ -106,7 +107,7 @@ p1 = ggplot(data=rot,
        theme_bw() + labs(color="Treatment", shape="Plot") +
        scale_y_continuous(limits=c(-4,4)) + 
        scale_x_continuous(limits=c(-4,4)) + 
-       labs(x="PC1 (16.8%)",y="PC2 (12.6%)") +
+       labs(x="PC1 (16.9%)",y="PC2 (12.5%)") +
        theme(text = element_text(size=14),
              panel.grid = element_blank(),legend.position='none')
 p2 = ggplot(data=rot, 
@@ -118,11 +119,23 @@ p2 = ggplot(data=rot,
       theme_bw() + labs(color="Treatment", shape="Plot") +
       scale_y_continuous(limits=c(-4,4)) + 
       scale_x_continuous(limits=c(-4,4)) + 
-      labs(x="PC1 (16.8%)",y="PC3 (10.7%)") +
+      labs(x="PC1 (16.9%)",y="PC3 (10.7%)") +
+      theme(text = element_text(size=14),
+            panel.grid = element_blank())
+p3 = ggplot(data=rot, 
+            aes(x=0, y=0, xend=PC2, yend=PC3, label=var)) +
+      geom_point(data=df, aes(x=PC2, y=PC3, color=trt.full, shape=num), 
+                 inherit.aes=FALSE, size=3) +
+      geom_segment(color='red', arrow=arrow(length=unit(0.03,"npc"))) +
+      geom_label_repel(aes(PC2 * 1.001, PC3 * 1.001)) +
+      theme_bw() + labs(color="Treatment", shape="Plot") +
+      scale_y_continuous(limits=c(-4,4)) + 
+      scale_x_continuous(limits=c(-4,4)) + 
+      labs(x="PC2 (12.5%)",y="PC3 (10.7%)") +
       theme(text = element_text(size=14),
             panel.grid = element_blank())
 p3 = p1 + p2
-
+p3
 # write plot
 ggsave("Figures/Figure5_Soil_Vegetation_PCA.jpeg", 
        plot = p3, width = 34, height = 14, units="cm")
