@@ -1,5 +1,4 @@
-#path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Soil_Analysis"
-path_to_soil_folder = "C:/Users/cmptrsn2/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Soil_Analysis"
+path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Soil_Analysis"
 setwd(path_to_soil_folder)
 
 library(ggplot2)
@@ -14,7 +13,7 @@ trts = c("A","B","C","D","E","R")
 trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
 
 # variable labels
-var.labels = c("SOM (%)","TOC (%)","TIC (%)","POM-C (%)","MAOM-C (%)","TC (%)","TN (%)","C:N Ratio",
+var.labels = c("SOM (%)","TOC (%)","TIC (%)","POC (%)","MAOC (%)","TC (%)","TN (%)","C:N Ratio",
                "Temperature (C)","Gravitational moisture (%)","Bulk density (g/cm3)",
                "Sand (%)","Silt (%)","Clay (%)","NO3 (ppm)","NH4 (ppm)","P (ppm)",
                "K (ppm)","Ca (ppm)","Mg (ppm)","K (meq)","Ca (meq)","Mg (meq)",
@@ -26,15 +25,21 @@ var.labels = c("SOM (%)","TOC (%)","TIC (%)","POM-C (%)","MAOM-C (%)","TC (%)","
 df.int = read.csv("Posteriors/All_Soil_Posterior_Intervals_ChainCount5.csv")
 
 # print results for tables
-cbind(df.int[which(df.int$v == var.labels[6]),c("v","t")],
-      round(df.int[which(df.int$v == var.labels[6]),c("mean","X5","X95")],2))
+i = 33
+cbind(df.int[which(df.int$v == var.labels[i]),c("v","t")],
+      round(df.int[which(df.int$v == var.labels[i]),c("mean","X5","X95")],1))
+cbind(df.int[which(df.int$v == var.labels[i]),c("v","t")],
+      round(df.int[which(df.int$v == var.labels[i]),c("mean","X5","X95")],2))
+cbind(df.int[which(df.int$v == var.labels[i]),c("v","t")],
+      round(df.int[which(df.int$v == var.labels[i]),c("mean","X5","X95")],3))
 
+# plot all variables
 ggplot(df.int, aes(y=factor(t, levels=trt.names), 
                    x=mean)) + 
        geom_errorbarh(aes(xmin=X5, xmax=X95), color="black") +
        geom_errorbarh(aes(xmin=X25, xmax=X75), color="blue") +
        geom_point() + 
-       facet_wrap(.~v, scales="free_x",ncol=5)
+       facet_wrap(.~v, scales="free_x",ncol=2)
 
 ################################################################################
 ### make combined plot for CEC, carbon fractions, texture, and aggregates
@@ -65,8 +70,14 @@ p.ag = ggplot(df.stack.ag, aes(y=factor(t, levels=trt.names),
               labs(x="Percent of total mass (%)",
                    y="",fill="Aggregate size class") +
               scale_fill_manual(values=ag.palette) +
-              theme(text=element_text(size=t.size)) 
-p.ag
+              theme(text=element_text(size=t.size),
+                    axis.text.y = element_blank()) +
+              coord_cartesian(xlim = c(0,100), clip="off") +
+              theme(plot.margin=unit(c(1,1,1,1),"lines")) +
+              geom_label(x=111.4,y=6.3,label="d",
+                         color="black",fill=alpha("white",0.9),
+                         label.r=unit(0,"pt"),label.size=0,
+                         size=8,fontface="bold")
 
 # stacked plot for particle size distribution
 text.labs = c("Sand (%)","Silt (%)","Clay (%)")
@@ -98,11 +109,16 @@ p.text = ggplot(df.stack.text,
                 labs(x="Percent of total mass (%)",y="", 
                      fill="Particle size class") +
                 scale_fill_manual(values=text.palette) +
-                theme(text = element_text(size=t.size))
-p.text
-
+                theme(text = element_text(size=t.size)) +
+                coord_cartesian(xlim = c(0,100), clip="off") +
+                theme(plot.margin=unit(c(1,1,1,1),"lines")) +
+                geom_label(x=111.1,y=6.3,label="c",
+                           color="black",fill=alpha("white",0.9),
+                           label.r=unit(0,"pt"),label.size=0,
+                           size=8,fontface="bold")
+                
 # stacked plot for carbon fractions
-c.labs = c("TIC (%)","POM-C (%)","MAOM-C (%)")
+c.labs = c("TIC (%)","POC (%)","MAOC (%)")
 df.stack.c = df.int[which(df.int$v %in% c.labs),]
 df.stack.c$position = rep(0, nrow(df.stack.c))
 for (i in 1:6) {
@@ -111,7 +127,7 @@ for (i in 1:6) {
   df.trt$position = cumsum(df.trt[seq(3,1,-1),"mean"])[seq(3,1,-1)] - 1.5*df.trt$mean
   df.stack.c[trt.id,"position"] = df.trt$position
 }
-c.labs.new = c("TIC","POM-C","MAOM-C")
+c.labs.new = c("TIC","POC","MAOC")
 df.stack.c$lab = rep(0, nrow(df.stack.c))
 for (i in 1:3) { df.stack.c$lab[which(df.stack.c$v == c.labs[i])] = c.labs.new[i] }
 c.palette <- tail(brewer.pal(6,"Oranges"),3)
@@ -126,8 +142,13 @@ p.c = ggplot(df.stack.c[which(df.stack.c$v %in% c.labs),],
              labs(x="Concentration (% [g C/g soil])",
                   y="",fill="Soil carbon fraction") + 
              scale_fill_manual(values=c.palette) +
-             theme(text = element_text(size=t.size))
-p.c
+             theme(text = element_text(size=t.size)) +
+             coord_cartesian(xlim = c(0,4.6), clip="off") +
+             theme(plot.margin=unit(c(1,1,1,1),"lines")) +
+             geom_label(x=5.12,y=6.3,label="a",
+                        color="black",fill=alpha("white",0.9),
+                        label.r=unit(0,"pt"),label.size=0,
+                        size=8,fontface="bold")
 
 # stacked plot for cation exchange
 meq.labs = c("K (meq)","Mg (meq)","Ca (meq)")
@@ -154,14 +175,24 @@ p.meq = ggplot(df.stack.meq, aes(x=mean,
                labs(x="Contribution to CEC (meq/100 g)",y="",
                     fill="Cation") +
                scale_fill_manual(values=meq.palette) +
-               theme(text = element_text(size=t.size))
-p.meq
+               theme(text = element_text(size=t.size),
+                     axis.text.y = element_blank()) +
+               coord_cartesian(xlim = c(0,41), clip="off") +
+               theme(plot.margin=unit(c(1,1,1,1),"lines")) +
+               geom_label(x=45.7,y=6.3,label="b",
+                          color="black",fill=alpha("white",0.9),
+                          label.r=unit(0,"pt"),label.size=0,
+                          size=8,fontface="bold")
 
-# combine carbon, meq, texture, & aggregate plots
-p.all = (p.c + theme(plot.margin = unit(c(0,60,0,0), "pt")) + p.meq)/(p.text+ theme(plot.margin = unit(c(0,2,0,0), "pt")) +p.ag)
+p.upper = p.c + p.meq + plot_spacer() + plot_layout(widths=c(0.5,0.5,0))
+p.lower = p.text + p.ag + plot_spacer() + plot_layout(widths=c(0.5,0.5,0))
+p.all =  p.upper/p.lower + 
+         plot_layout(guides = "collect") + 
+         theme(legend.position = "right",
+               plot.margin = unit(c(0,0,0,0),"mm"))
 p.all
-ggsave("Figures/CEC_And_Carbon_Texture_Aggregates.jpeg", 
-       plot = p.all, width = 36, height = 18, units="cm")
+ggsave("Figures/Figure3_Carbon_CEC_Texture_Aggregates.jpeg", 
+       plot=p.all, width=30, height=20, units="cm",dpi=600)
 
 ################################################################################
 # plot all other chemical and physical variables
@@ -174,22 +205,36 @@ var.labels = c("Temperature (C)","Gravitational moisture (%)","Bulk density (g/c
 df.plot = df.int[which(df.int$v %in% vars),]
 df.plot$lab = rep(0, nrow(df.plot))
 for (i in 1:length(vars)) { df.plot$lab[which(df.plot$v == vars[i])] = var.labels[i] }
-p.chem.phys = ggplot(df.plot, 
-                     aes(y=factor(t, levels=trt.names), x=mean)) + 
-                         geom_errorbar(aes(xmin=`X5`, xmax=`X95`), 
-                                       width=0.25, color="black", 
-                                       position=position_dodge(width=0.5)) +
-                         geom_errorbar(aes(xmin=`X25`, xmax=`X75`), 
-                                       width=0.25, color="blue", 
-                                       position=position_dodge(width=0.5)) +
-                         geom_point(position=position_dodge(width=0.5)) +
-                         facet_wrap(.~factor(lab, levels=var.labels), 
-                                    scales="free_x", ncol=3) +
-                         theme(panel.spacing.x = unit(0.4, "cm")) +
-                         labs(y="",x="Posterior estimate") + 
-                         theme(text = element_text(size=12))
-ggsave("Figures/Nutrients_BD_Temp_Moisture_pH.jpeg", 
-       plot = p.chem.phys, width = 18, height = 16, units="cm")
+ggplot(df.plot, 
+       aes(y=factor(t, levels=trt.names), x=mean)) + 
+           geom_errorbar(aes(xmin=`X5`, xmax=`X95`), 
+                         width=0.25, color="black", 
+                         position=position_dodge(width=0.5)) +
+           geom_errorbar(aes(xmin=`X25`, xmax=`X75`), 
+                         width=0.25, color="blue", 
+                         position=position_dodge(width=0.5)) +
+           geom_point(position=position_dodge(width=0.5)) +
+           facet_wrap(.~factor(lab, levels=var.labels), 
+                      scales="free_x", ncol=3) +
+           theme(panel.spacing.x = unit(0.4, "cm")) +
+           labs(y="",x="Posterior estimate") + 
+           theme(text = element_text(size=12))
+
+df.ref.sort = sort(df.plot$mean[which(df.plot$t == "Reference")]/df.plot$v.mean[which(df.plot$t == "Reference")]*100-100, index.return=T)
+ref.v.order = df.plot$lab[which(df.plot$t == "Reference")]
+p.chem.phys = ggplot(df.plot, aes(x=mean/v.mean*100-100,
+                     y=factor(lab,levels=ref.v.order[df.ref.sort$ix]))) + 
+                     geom_point(size=0.6) + 
+                     geom_errorbar(aes(xmin=`X5`/v.mean*100-100, 
+                                       xmax=`X95`/v.mean*100-100), 
+                                   width=0.4,position=position_dodge(width=0.5)) +
+                     geom_vline(xintercept=1,linewidth=0.2,linetype="dashed") +
+                     facet_wrap(.~factor(t, levels=trt.names), ncol=3) +
+                     labs(x="Posterior deviation from mean (%)",y="") +
+                     theme(panel.spacing.x = unit(0.3,"cm"))
+ggsave("Figures/Figure4_Nutrients_BD_Temp_Moisture_pH.jpeg", 
+       plot=p.chem.phys,width=18,height=12,units="cm",dpi=600)
+
 
 ## plot continuous distributions
 new.df = all.a[["som"]]
