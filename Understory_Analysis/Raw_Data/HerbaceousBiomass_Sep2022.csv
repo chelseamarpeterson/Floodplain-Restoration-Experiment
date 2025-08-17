@@ -1,0 +1,399 @@
+Plot,Quadrat,Spp,Actual dry mass + container w/o bag (g),Container mass (g),Actual dry mass w/o bag (g)
+A1,Q4,Impatiens capensis,407.11,406.57,0.54
+B1,Q2,Humulus japonicus,424.37,406.5,17.87
+B1,Q4,Acer saccharinum,406.74,406.55,0.19
+B1,Q4,Toxicodendron radicans,406.88,406.8,0.08
+B1,Q4,Urtica gracilis,487.07,406.99,80.08
+B1,Q5,Humulus japonicus,420.26,406.8,13.46
+B1,Q5,Phalaris arundinacea,410.7,406.61,4.09
+B1,Q5,Urtica gracilis,408.65,407.05,1.6
+D1,Q4,Persicaria punctata,412.44,407.1,5.34
+D2,Q5,Ageratina altissima,412,406.51,5.49
+E3,Q3,Humulus japonicus,437.59,406.48,31.11
+B1,Q1,Herbaceous litter,480.63,406.77,73.86
+B1,Q1,Fine woody debris,462.37,406.48,55.89
+R2,Q3,Morus alba,420.26,406.79,13.47
+R2,Q4,Ulmus americana,411.83,406.52,5.31
+R2,Q3,Sicyos angulatus,408.32,406.43,1.89
+R2,Q2,Ambrosia trifida,412.64,406.41,6.23
+R2,Q2,Pilea pumila,414.87,406.41,8.46
+R2,Q2,Morus alba,407.1,406.43,0.67
+R2,Q2,Leersia oryzoides,407.82,406.41,1.41
+R2,Q4,Acer saccharinum,406.75,406.41,0.34
+R2,Q2,Sicyos angulatus,408.89,406.41,2.48
+R2,Q5,Sicyos angulatus,419.37,406.41,12.96
+R2,Q3,Pilea pumila,411.19,406.41,4.78
+R2,Q2,Bidens frondosa,409.28,406.41,2.87
+R2,Q3,Bidens frondosa,425.57,406.41,19.16
+R2,Q2,Acalypha rhomboidea,406.49,406.41,0.08
+R2,Q3,Ulmus americana,406.62,406.41,0.21
+R2,Q1,Pilea pumila,406.68,406.41,0.27
+R2,Q1,Ulmus americana,406.99,406.41,0.58
+R2,Q5,Laportea canadensis,412.01,406.41,5.6
+R2,Q1,Bidens frondosa,413.93,406.41,7.52
+R2,Q1,Sicyos angulatus,407.64,406.41,1.23
+R1,Q4,Persicaria punctata,406.32,406.36,0
+R1,Q2,Carex grisea,411.28,406.36,4.92
+R1,Q3,Stachys palustris,406.52,406.36,0.16
+R1,Q3,Leersia virginica,406.37,406.36,0.01
+R1,Q2,Sicyos angulatus,411.74,406.36,5.38
+R1,Q1,Sicyos angulatus,407.23,406.36,0.87
+R1,Q1,Stachys palustris,407.2,406.36,0.84
+R1,Q4,Galium aparine,406.36,406.36,0
+R1,Q1,Smilax tamnoides,406.97,406.36,0.61
+R1,Q2,Phytolacca americana,421.77,406.36,15.41
+R3,Q3,Acer saccharinum,406.45,406.36,0.09
+R3,Q1,Persicaria punctata,406.58,406.36,0.22
+R3,Q5,Scutellaria lateriflora,407.2,406.36,0.84
+R3,Q1,Morus alba,407.3,406.36,0.94
+R3,Q1,Pilea pumila,406.38,406.36,0.02
+R3,Q2,Persicaria pensylvanica,406.65,406.36,0.29
+R3,Q1,Bidens frondosa,422.68,406.36,16.32
+R3,Q4,Boehmerica cylindrica,407.08,406.36,0.72
+E1,Q2,Humulus japonicus,470.94,406.36,64.58
+E1,Q4,Humulus japonicus,411.33,406.36,4.97
+E1,Q3,Humulus japonicus,418.73,406.36,12.37
+E1,Q5,Sicyos angulatus,410,406.36,3.64
+B1,Q1,Humulus japonicus,444.08,406.36,37.72
+B2,Q4,Persicaria punctata,406.63,406.36,0.27
+B2,Q3,Vitis riparia,406.46,406.36,0.1
+B2,Q3,Galium aparine,406.42,406.36,0.06
+B2,Q3,Humulus japonicus,406.61,406.36,0.25
+B2,Q2,Galium aparine,406.43,406.36,0.07
+B2,Q1,Galium aparine,406.41,406.36,0.05
+B2,Q4,Sicyos angulatus,406.92,406.36,0.56
+B2,Q5,Galium aparine,407.02,406.36,0.66
+B3,Q1,Galium aparine,406.37,406.36,0.01
+B3,Q2,Galium aparine,406.36,406.36,0
+B3,Q4,Galium aparine,406.38,406.36,0.02
+B3,Q3,Galium aparine,406.36,406.36,0
+B3,Q5,Packera glabella,407.27,406.36,0.91
+B3,Q2,Acer saccharinum,406.41,406.36,0.05
+B3,Q4,Packera glabella,406.36,406.36,0
+D2,Q5,Leersia virginica,409.15,406.36,2.79
+D2,Q4,Humulus japonicus,408.25,406.36,1.89
+D2,Q4,Persicaria punctata,407,406.36,0.64
+D2,Q5,Humulus japonicus,407.68,406.36,1.32
+D2,Q5,Sicyos angulatus,407.95,406.36,1.59
+D2,Q3,Phalaris arundinacea,409.37,406.36,3.01
+D2,Q4,Pilea pumila,410.34,406.36,3.98
+D1,Q5,Pilea pumila,408.11,406.36,1.75
+D1,Q5,Sicyos angulatus,409.02,406.36,2.66
+D1,Q4,Bidens frondosa,411.93,406.36,5.57
+D1,Q5,Leersia oryzoides,406.58,406.36,0.22
+D1,Q5,Acer saccharinum,407.14,406.36,0.78
+D1,Q4,Pilea pumila,406.52,406.36,0.16
+D1,Q1,Urtica gracilis,435.04,406.36,28.68
+D2,Q1,Humulus japonicus,429.89,406.36,23.53
+B3,Q2,Carex grisea,413.04,406.36,6.68
+B3,Q2,Morus alba,409.94,406.36,3.58
+C2,Q3,Galium aparine,406.71,406.36,0.35
+C2,Q1,Toxicodendron radicans,415.06,406.36,8.7
+C2,Q4,Ulmus americana,413.87,406.36,7.51
+C2,Q2,Toxicodendron radicans,412.56,406.36,6.2
+C2,Q5,Galium aparine,406.38,406.36,0.02
+C2,Q1,Symphyotrichum ontarionisis,407.28,406.36,0.92
+C2,Q1,Galium aparine,406.41,406.36,0.05
+C2,Q4,Leersia oryzoides,406.59,406.36,0.23
+C2,Q4,Persicaria punctata,406.41,406.36,0.05
+C2,Q3,Galium aparine,406.37,406.36,0.01
+C2,Q4,Humulus japonicus,408.75,406.36,2.39
+C3,Q5,Sicyos angulatus,409.87,406.36,3.51
+C3,Q5,Persicaria punctata,408.04,406.36,1.68
+C3,Q5,Galium aparine,406.39,406.36,0.03
+C3,Q2,Galium aparine,406.35,406.36,0
+C3,Q3,Parthenocissus quinquefolia,407.01,406.36,0.65
+C3,Q3,Galium aparine,406.35,406.36,0
+D3,Q3,Sicyos angulatus,406.66,406.36,0.3
+D3,Q1,Sicyos angulatus,406.56,406.36,0.2
+E3,Q3,Phalaris arundinacea,407.71,406.36,1.35
+A2,Q2,Humulus japonicus,421.48,406.36,15.12
+A2,Q3,Humulus japonicus,411.17,406.36,4.81
+A2,Q1,Humulus japonicus,438.67,406.36,32.31
+A2,Q5,Humulus japonicus,412.04,406.36,5.68
+A2,Q3,Ulmus americana,406.72,406.36,0.36
+A2,Q4,Pilea pumila,414.5,406.36,8.14
+A2,Q3,Pilea pumila,407.14,406.36,0.78
+A3,Q2,Sicyos angulatus,410.58,406.36,4.22
+A3,Q1,Sicyos angulatus,406.47,406.36,0.11
+A3,Q2,Morus alba,408.54,406.36,2.18
+A3,Q1,Pilea pumila,407.04,406.36,0.68
+A3,Q1,Toxicodendron radicans,410.11,406.36,3.75
+D1,Q1,Humulus japonicus,407.98,406.36,1.62
+D1,Q1,Pilea pumila,407.98,406.36,1.62
+D1,Q3,Ulmus americana,411.29,406.36,4.93
+D1,Q3,Pilea pumila,410.82,406.36,4.46
+D1,Q2,Phalaris arundinacea,408.52,406.36,2.16
+E2,Q3,Humulus japonicus,411.39,406.36,5.03
+E2,Q4,Humulus japonicus,455.92,406.36,49.56
+E2,Q3,Phalaris arundinacea,407.28,406.36,0.92
+E3,Q5,Solanum ptychanthum,406.68,406.36,0.32
+E2,Q3,Sicyos angulatus,417.56,406.36,11.2
+E2,Q5,Phalaris arundinacea,452.13,406.36,45.77
+E2,Q1,Humulus japonicus,420.4,406.36,14.04
+E2,Q5,Humulus japonicus,408.8,406.36,2.44
+E2,Q2,Phalaris arundinacea,418.17,406.36,11.81
+E2,Q5,Phalaris arundinacea,421.11,406.36,14.75
+E2,Q1,Phalaris arundinacea,408.34,406.36,1.98
+E2,Q1,Sicyos angulatus,407.25,406.36,0.89
+E2,Q2,Sicyos angulatus,408.6,406.36,2.24
+E1,Q5,Phalaris arundinacea,450.21,406.36,43.85
+A2,Q4,Persicaria punctata,406.39,406.36,0.03
+A2,Q5,Morus alba,408.83,406.36,2.47
+A2,Q3,Urtica gracilis,406.57,406.36,0.21
+A2,Q4,Morus alba,407.86,406.36,1.5
+A2,Q3,Persicaria punctata,407,406.36,0.64
+A2,Q4,Bidens frondosa,406.47,406.36,0.11
+A2,Q5,Persicaria punctata,410.21,406.36,3.85
+A2,Q4,Symphyotrichum ontarionisis,406.41,406.36,0.05
+A2,Q4,Sicyos angulatus,407.06,406.36,0.7
+A2,Q5,Toxicodendron radicans,406.75,406.36,0.39
+A3,Q5,Pilea pumila,406.66,406.36,0.3
+A3,Q1,Galium aparine,406.37,406.36,0.01
+A3,Q4,Galium aparine,0.02,0,0.02
+A3,Q4,Symphyotrichum ontarionisis,407.34,406.36,0.98
+A3,Q3,Galium aparine,0.08,406.36,0
+A3,Q3,Symphyotrichum ontarionisis,406.99,406.36,0.63
+A3,Q5,Symphyotrichum ontarionisis,411.62,406.36,5.26
+A3,Q4,Trifolium repens,408.01,406.36,1.65
+A3,Q2,Pilea pumila,407.21,406.36,0.85
+A3,Q1,Humulus japonicus,412.21,406.36,5.85
+D1,Q2,Morus alba,407.34,406.36,0.98
+D1,Q2,Persicaria punctata,406.49,406.36,0.13
+D1,Q2,Sicyos angulatus,406.47,406.36,0.11
+D1,Q3,Carya illinoinensis,406.58,406.36,0.22
+D1,Q2,Leersia oryzoides,406.59,406.36,0.23
+D1,Q1,Phalaris arundinacea,0.02,0,0.02
+D1,Q2,Humulus japonicus,406.91,406.36,0.55
+R3,Q4,Scutellaria lateriflora,409.1,406.36,2.74
+R3,Q4,Acer saccharinum,408.16,406.36,1.8
+R3,Q5,Bidens frondosa,15.29,0,15.29
+R3,Q4,Vitis riparia,1.45,0,1.45
+R1,Q1,Pilea pumila,7.48,0,7.48
+A1,Q5,Fraxinus pennsylvanica,0.17,0,0.17
+A1,Q4,Ulmus americana,408.05,406.36,1.69
+A1,Q2,Elymus virginicus,0.15,0,0.15
+A1,Q4,Acer saccharinum,0.67,0,0.67
+A1,Q4,Persicaria punctata,0.69,0,0.69
+A1,Q5,Galium aparine,0.07,0,0.07
+A1,Q2,Pilea pumila,5.45,0,5.45
+A1,Q3,Pilea pumila,3.83,0,3.83
+A1,Q5,Viola sororia,0.41,0,0.41
+A1,Q1,Pilea pumila,2.6,0,2.6
+A1,Q4,Toxicodendron radicans,0.84,0,0.84
+A1,Q5,Toxicodendron radicans,0.11,0,0.11
+A1,Q5,Sicyos angulatus,0.86,0,0.86
+A1,Q2,Persicaria punctata,4.54,0,4.54
+C1,Q3,Persicaria punctata,2.74,0,2.74
+C1,Q2,Symphyotrichum ontarionisis,1.89,0,1.89
+C1,Q3,Impatiens capensis,1.2,0,1.2
+C1,Q1,Elymus virginicus,5.74,0,5.74
+C1,Q1,Pilea pumila,0.29,0,0.29
+C1,Q3,Pilea pumila,0.62,0,0.62
+C1,Q1,Acer saccharinum,0.32,0,0.32
+C1,Q3,Laportea canadensis,0.27,0,0.27
+C1,Q2,Persicaria punctata,0.16,0,0.16
+C1,Q4,Pilea pumila,9.67,0,9.67
+E1,Q4,Phalaris arundinacea,60.17,0,60.17
+B1,Q2,Sicyos angulatus,0.48,0,0.48
+B1,Q2,Persicaria punctata,0.03,0,0.03
+B1,Q2,Galium aparine,0.01,0,0.01
+B1,Q3,Toxicodendron radicans,0.31,0,0.31
+C2,Q2,Symphyotrichum ontarionisis,0.8,0,0.8
+D1,Q5,Leersia virginica,2.85,0,2.85
+E3,Q2,Pilea pumila,0.08,0,0.08
+E3,Q3,Humulus japonicus,0.04,0,0.04
+E3,Q4,Humulus japonicus,7.39,0,7.39
+E1,Q3,Phalaris arundinacea,43.3,0,43.3
+D2,Q3,Humulus japonicus,25.11,0,25.11
+R1,Q3,Urtica gracilis,43.02,0,43.02
+E1,Q1,Humulus japonicus,40.47,0,40.47
+D2,Q5,Pilea pumila,1.68,0,1.68
+D2,Q2,Humulus japonicus,7.72,0,7.72
+B3,Q2,Phalaris arundinacea,18.8,0,18.8
+D3,Q1,Phalaris arundinacea,6.04,0,6.04
+E3,Q5,Persicaria pensylvanica,11.94,0,11.94
+E3,Q4,Amaranthus tuberculatus,5.44,0,5.44
+E3,Q5,Sicyos angulatus,0.88,0,0.88
+E3,Q4,Persicaria pensylvanica,5.43,0,5.43
+E3,Q1,Phalaris arundinacea,14.07,0,14.07
+E3,Q5,Phalaris arundinacea,1.44,0,1.44
+E1,Q3,Herbaceous litter,95.18,0,95.18
+C1,Q2,Herbaceous litter,68.77,0,68.77
+C1,Q2,Fine woody debris,14.45,0,14.45
+A2,Q3,Herbaceous litter,41.38,0,41.38
+A2,Q3,Fine woody debris,0,0,0
+A2,Q5,Herbaceous litter,41.5,0,41.5
+A2,Q5,Fine woody debris,25.84,0,25.84
+A2,Q4,Herbaceous litter,33.7,0,33.7
+A2,Q4,Fine woody debris,33.75,0,33.75
+A2,Q1,Herbaceous litter,80.09,0,80.09
+A2,Q1,Fine woody debris,0,0,0
+A2,Q2,Herbaceous litter,58.55,0,58.55
+A2,Q2,Fine woody debris,0,0,0
+A3,Q3,Herbaceous litter,82.88,0,82.88
+A3,Q3,Fine woody debris,7.68,0,7.68
+A3,Q5,Herbaceous litter,42.99,0,42.99
+A3,Q5,Fine woody debris,38.24,0,38.24
+A3,Q1,Herbaceous litter,41.77,0,41.77
+A3,Q1,Fine woody debris,95.06,0,95.06
+A1,Q5,Herbaceous litter,39.48,0,39.48
+A1,Q5,Fine woody debris,25.53,0,25.53
+A1,Q3,Herbaceous litter,35.14,0,35.14
+A1,Q3,Fine woody debris,0,0,0
+B2,Q1,Herbaceous litter,46.53,0,46.53
+B2,Q1,Fine woody debris,37.34,0,37.34
+B2,Q3,Herbaceous litter,33.43,0,33.43
+B2,Q3,Fine woody debris,36.52,0,36.52
+B2,Q4,Herbaceous litter,49.83,0,49.83
+B2,Q4,Fine woody debris,108.62,0,108.62
+B2,Q5,Herbaceous litter,36.02,0,36.02
+B2,Q5,Fine woody debris,13.6,0,13.6
+C1,Q3,Herbaceous litter,38.96,0,38.96
+C1,Q3,Fine woody debris,13,0,13
+C1,Q4,Herbaceous litter,25.22,0,25.22
+C1,Q4,Fine woody debris,0,0,0
+C1,Q5,Herbaceous litter,28.99,0,28.99
+C1,Q5,Fine woody debris,0,0,0
+C3,Q5,Herbaceous litter,27.57,0,27.57
+C3,Q5,Fine woody debris,76.9,0,76.9
+C2,Q3,Herbaceous litter,47.43,0,47.43
+C2,Q3,Fine woody debris,35.01,0,35.01
+C2,Q1,Herbaceous litter,31.49,0,31.49
+C2,Q1,Fine woody debris,52.62,0,52.62
+C2,Q2,Herbaceous litter,80.7,0,80.7
+C2,Q2,Fine woody debris,109.14,0,109.14
+B3,Q2,Herbaceous litter,38.99,0,38.99
+B3,Q2,Fine woody debris,41.97,0,41.97
+B3,Q5,Herbaceous litter,28.05,0,28.05
+B3,Q5,Fine woody debris,0,0,0
+D1,Q1,Herbaceous litter,27.6,0,27.6
+D1,Q1,Fine woody debris,0,0,0
+D1,Q2,Herbaceous litter,41.85,0,41.85
+D1,Q2,Fine woody debris,2,0,2
+D1,Q3,Herbaceous litter,23.56,0,23.56
+D1,Q3,Fine woody debris,8,0,8
+D1,Q4,Herbaceous litter,17.67,0,17.67
+D1,Q4,Fine woody debris,0,0,0
+D1,Q5,Herbaceous litter,48.94,0,48.94
+D1,Q5,Fine woody debris,0,0,0
+E2,Q1,Herbaceous litter,129.51,0,129.51
+E2,Q1,Fine woody debris,0,0,0
+E2,Q2,Herbaceous litter,80.25,0,80.25
+E2,Q2,Fine woody debris,7.3,0,7.3
+E2,Q3,Herbaceous litter,74.41,0,74.41
+E2,Q3,Fine woody debris,0,0,0
+E2,Q4,Herbaceous litter,35.26,0,35.26
+E2,Q4,Fine woody debris,0,0,0
+E2,Q5,Herbaceous litter,43.94,0,43.94
+E2,Q5,Fine woody debris,4.26,0,4.26
+D3,Q1,Herbaceous litter,83.17,0,83.17
+D3,Q1,Fine woody debris,0,0,0
+D3,Q2,Herbaceous litter,85.96,0,85.96
+D3,Q2,Fine woody debris,5.23,0,5.23
+D3,Q3,Herbaceous litter,83.78,0,83.78
+D3,Q3,Fine woody debris,2.11,0,2.11
+D3,Q4,Herbaceous litter,69.44,0,69.44
+D3,Q4,Fine woody debris,5.62,0,5.62
+D3,Q5,Herbaceous litter,86.21,0,86.21
+D3,Q5,Fine woody debris,1.4,0,1.4
+R3,Q1,Herbaceous litter,24.28,0,24.28
+R3,Q1,Fine woody debris,0,0,0
+R3,Q2,Herbaceous litter,19.6,0,19.6
+R3,Q2,Fine woody debris,53.27,0,53.27
+R3,Q3,Herbaceous litter,41.65,0,41.65
+R3,Q3,Fine woody debris,10.78,0,10.78
+R3,Q4,Herbaceous litter,26.1,0,26.1
+R3,Q4,Fine woody debris,0,0,0
+R3,Q5,Herbaceous litter,22.71,0,22.71
+R3,Q5,Fine woody debris,0,0,0
+D2,Q1,Herbaceous litter,63.54,0,63.54
+D2,Q1,Fine woody debris,0,0,0
+D2,Q2,Herbaceous litter,24.7,0,24.7
+D2,Q2,Fine woody debris,0,0,0
+D2,Q3,Herbaceous litter,52.25,0,52.25
+D2,Q3,Fine woody debris,0,0,0
+D2,Q4,Herbaceous litter,27.53,0,27.53
+D2,Q4,Fine woody debris,0,0,0
+D2,Q5,Herbaceous litter,73.23,0,73.23
+D2,Q5,Fine woody debris,10.21,0,10.21
+E3,Q1,Herbaceous litter,70.62,0,70.62
+E3,Q1,Fine woody debris,0,0,0
+E3,Q2,Herbaceous litter,84.16,0,84.16
+E3,Q2,Fine woody debris,1.15,0,1.15
+E3,Q3,Herbaceous litter,41.33,0,41.33
+E3,Q3,Fine woody debris,0.75,0,0.75
+E3,Q4,Herbaceous litter,52.36,0,52.36
+E3,Q4,Fine woody debris,1.96,0,1.96
+E3,Q5,Herbaceous litter,52.62,0,52.62
+E3,Q5,Fine woody debris,2.31,0,2.31
+R1,Q1,Herbaceous litter,8.15,0,8.15
+R1,Q1,Fine woody debris,1.68,0,1.68
+R1,Q2,Herbaceous litter,11.73,0,11.73
+R1,Q2,Fine woody debris,5.83,0,5.83
+R1,Q3,Herbaceous litter,11.19,0,11.19
+R1,Q3,Fine woody debris,0,0,0
+R1,Q4,Herbaceous litter,25.75,0,25.75
+R1,Q4,Fine woody debris,217.67,0,217.67
+R1,Q5,Herbaceous litter,108.4,0,108.4
+R1,Q5,Fine woody debris,317.67,0,317.67
+R2,Q1,Herbaceous litter,20.93,0,20.93
+R2,Q1,Fine woody debris,6.71,0,6.71
+R2,Q2,Herbaceous litter,17.33,0,17.33
+R2,Q2,Fine woody debris,95.51,0,95.51
+R2,Q3,Herbaceous litter,11.69,0,11.69
+R2,Q3,Fine woody debris,7.03,0,7.03
+R2,Q4,Herbaceous litter,53.2,0,53.2
+R2,Q4,Fine woody debris,87.25,0,87.25
+R2,Q5,Herbaceous litter,38.27,0,38.27
+R2,Q5,Fine woody debris,219.88,0,219.88
+E3,Q1,Herbaceous litter,136.56,0,136.56
+E3,Q1,Fine woody debris,24.88,0,24.88
+E3,Q2,Herbaceous litter,123.55,0,123.55
+E3,Q2,Fine woody debris,0,0,0
+E3,Q4,Herbaceous litter,87.38,0,87.38
+E3,Q4,Fine woody debris,0,0,0
+E3,Q5,Herbaceous litter,71.65,0,71.65
+E3,Q5,Fine woody debris,45.54,0,45.54
+E3,Q2,Phalaris arundinacea,15.37,0,15.37
+B1,Q2,Herbaceous litter,50.47,0,50.47
+B1,Q2,Fine woody debris,25.3,0,25.3
+B1,Q3,Herbaceous litter,42.36,0,42.36
+B1,Q3,Fine woody debris,132.18,0,132.18
+B1,Q4,Herbaceous litter,55.93,0,55.93
+B1,Q4,Fine woody debris,81.81,0,81.81
+B1,Q5,Herbaceous litter,120.14,0,120.14
+B1,Q5,Fine woody debris,0,0,0
+C3,Q1,Herbaceous litter,64.92,0,64.92
+C3,Q1,Fine woody debris,68.15,0,68.15
+C3,Q2,Herbaceous litter,39.44,0,39.44
+C3,Q2,Fine woody debris,0.37,0,0.37
+C3,Q4,Herbaceous litter,48.73,0,48.73
+C3,Q4,Fine woody debris,157.95,0,157.95
+C3,Q5,Herbaceous litter,75.71,0,75.71
+C3,Q5,Fine woody debris,108.35,0,108.35
+C1,Q1,Herbaceous litter,18.15,0,18.15
+C1,Q1,Fine woody debris,1.49,0,1.49
+C2,Q4,Herbaceous litter,35.71,0,35.71
+C2,Q4,Fine woody debris,52.21,0,52.21
+C2,Q5,Herbaceous litter,31.79,0,31.79
+C2,Q5,Fine woody debris,3.97,0,3.97
+C2,Q2,Morus alba,0.17,0,0.17
+B3,Q1,Herbaceous litter,40.53,0,40.53
+B3,Q1,Fine woody debris,249.05,0,249.05
+B3,Q3,Herbaceous litter,38.26,0,38.26
+B3,Q3,Fine woody debris,123.66,0,123.66
+B3,Q4,Herbaceous litter,30.38,0,30.38
+B3,Q4,Fine woody debris,54.71,0,54.71
+B2,Q2,Herbaceous litter,47.25,0,47.25
+B2,Q2,Fine woody debris,199.32,0,199.32
+A1,Q1,Herbaceous litter,45.34,0,45.34
+A1,Q1,Fine woody debris,28.32,0,28.32
+A1,Q2,Herbaceous litter,39.63,0,39.63
+A1,Q2,Fine woody debris,32.01,0,32.01
+A1,Q4,Herbaceous litter,57.74,0,57.74
+A1,Q4,Fine woody debris,62.55,0,62.55
+A3,Q2,Herbaceous litter,51.13,0,51.13
+A3,Q2,Fine woody debris,22.37,0,22.37
+A3,Q4,Herbaceous litter,27.09,0,27.09
+A3,Q4,Fine woody debris,2.06,0,2.06

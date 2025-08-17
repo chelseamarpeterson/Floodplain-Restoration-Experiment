@@ -39,7 +39,7 @@ ggplot(df.int, aes(y=factor(t, levels=trt.names),
        geom_errorbarh(aes(xmin=X5, xmax=X95), color="black") +
        geom_errorbarh(aes(xmin=X25, xmax=X75), color="blue") +
        geom_point() + 
-       facet_wrap(.~v, scales="free_x",ncol=2)
+       facet_wrap(.~v, scales="free_x",ncol=5)
 
 ################################################################################
 ### make combined plot for CEC, carbon fractions, texture, and aggregates

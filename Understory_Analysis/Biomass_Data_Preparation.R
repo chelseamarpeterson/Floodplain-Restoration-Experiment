@@ -1,25 +1,28 @@
-path_to_repo = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo"
+path_to_repo = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Chapter2/Floodplain-Experiment-Repo"
 setwd(path_to_repo)
 
 library(ggplot2)
-library(readxl)
 library(ggfortify)
 library(patchwork)
 library(reshape2)
 library(dplyr)
 library(tidyr)
 
+################################################################################
+# script that creates cleans dataframe for dry mass of litter, fine woody debris, 
+# and biomass by species group
+
 # treatments
 trts = c("A","B","C","D","E","R")
 trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
 
 ## read in biomass data for 2022 and 2023
-bm.2023 = read_excel("Understory_Analysis/Raw_Data/Joslin_Vegetation_Cover_Biomass_Aug2023.xlsx", sheet="Biomass")
-bm.2022 = read_excel("Understory_Analysis/Raw_Data/HerbaceousBiomass_Sep2022.xlsx", sheet="ActualBiomass")
+bm.2023 = read.csv("Understory_Analysis/Raw_Data/HerbaceousBiomass_Aug2023.csv")
+bm.2022 = read.csv("Understory_Analysis/Raw_Data/HerbaceousBiomass_Sep2022.csv")
 
 # remove boat mass columns
-bm.2023 = bm.2023[, -which(colnames(bm.2023) %in% c("Mass of boat (g)","Mass of boat + vegetation (g)","Note"))]
-bm.2022 = bm.2022[, -which(colnames(bm.2022) %in% c("Container mass (g)","Actual dry mass + container w/o bag (g)","Max diameter (cm)"))]
+bm.2023 = bm.2023[, -which(colnames(bm.2023) %in% c("Mass.of.boat..g.","Mass.of.boat...vegetation..g.","Note"))]
+bm.2022 = bm.2022[, -which(colnames(bm.2022) %in% c("Container.mass..g.","Actual.dry.mass...container.w.o.bag..g."))]
 
 # update column names
 colnames(bm.2023) = c("plot","quad","spp","mass")
@@ -107,91 +110,3 @@ for (y in c(2022, 2023)) {
 
 # write data by quadrat to file
 write.csv(df.quad.sum, "Understory_Analysis/Clean_Data/Biomass_By_Quadrat_and_Year.csv", row.names=F)
-
-
-# melt biomass dataframe
-df.melt = melt(df.quad.sum, id.vars = c("year","trt","trt.full","num","quad"), variable.name = "type", value.name="mass.g.m2")
-
-# dataframes for herb biomass, herb lit, and fwd in each plot summed over quadrats
-bm.plt.total = data.frame(matrix(nrow=n.t*n.p, ncol=3))
-hl.plt.total = data.frame(matrix(nrow=n.t*n.p, ncol=3))
-fwd.plt.total = data.frame(matrix(nrow=n.t*n.p, ncol=3))
-colnames(bm.plt.total) = c("trt","plt","mass.g.m2")
-colnames(hl.plt.total) = c("trt","plt","mass.g.m2")
-colnames(fwd.plt.total) = c("trt","plt","mass.g.m2")
-k = 1
-for (t in trts) {
-  for (i in 1:n.p) {
-    bm.plt.id = which(bm.dat$plot == paste(t, i , sep=""))
-    hl.plt.id = which(hl.dat$plot == paste(t, i , sep=""))
-    fwd.plt.id = which(fwd.dat$plot == paste(t, i , sep=""))
-    bm.plt.total[k, c("trt","plt")] = c(t, i)
-    hl.plt.total[k, c("trt","plt")] = c(t, i)
-    fwd.plt.total[k, c("trt","plt")] = c(t, i)
-    bm.plt.total[k, "mass.g.m2"] = sum(bm.dat$dry.mass[bm.plt.id]/(30^2)*(100^2))/5
-    hl.plt.total[k, "mass.g.m2"] = sum(hl.dat$dry.mass[hl.plt.id]/(30^2)*(100^2))/5
-    fwd.plt.total[k, "mass.g.m2"] = sum(fwd.dat$dry.mass[fwd.plt.id]/(30^2)*(100^2))/5
-    k = k + 1
-  }
-}
-
-# bind biomass, litter, and fwd dfs
-colnames(bm.plt.total)[3] = "Herbaceous biomass"
-colnames(hl.plt.total)[3] = "Herbaceous litter"
-colnames(fwd.plt.total)[3] = "Fine woody debris"
-bm.melt = melt(bm.plt.total, id.vars = c("trt","plt"), variable.name = "Type", value.name="mass.g.m2")
-hl.melt = melt(hl.plt.total, id.vars = c("trt","plt"), variable.name = "Type", value.name="mass.g.m2")
-fwd.melt = melt(fwd.plt.total, id.vars = c("trt","plt"), variable.name = "Type", value.name="mass.g.m2")
-fwd.melt[is.na(fwd.melt$mass.g.m2), "mass.g.m2"] = 0
-df.total = rbind(bm.melt,hl.melt,fwd.melt)
-
-# sort biomass dataframe
-bm.sort = bm.plt.sum[order(bm.plt.sum$plot,-bm.plt.sum$mass.g),]
-
-# data frame of most abundant species in each plot
-df.sp.sort = data.frame(matrix(nrow=n.t*n.p, ncol=max.n.sp+2))
-colnames(df.sp.sort) = c("trt","plot",seq(1,max.n.sp))
-k = 1
-for (t in trts) {
-  for (i in 1:n.p) {
-      plt.ind = which(bm.sort$trt == t & bm.sort$plot == i)
-      plt.sp = bm.sort$spp[plt.ind]
-      df.sp.sort[k,"trt"] = t
-      df.sp.sort[k,"plot"] = i
-      df.sp.sort[k,3:(length(plt.sp)+2)] = plt.sp
-      k = k + 1
-  }
-}
-
-# dataframe for number of unique species in each plot
-df.uni.sp = data.frame(matrix(nrow=n.plots, ncol=5))
-colnames(df.uni.sp) = c("trt","plot","n.sp","n.nat.sp","n.inv.sp")
-native.sp = sp.2022$Spp[which(sp.2022$Native == 1)] 
-k = 1
-for (t in trts) {
-  for (i in 1:n.p) {
-    plt.ind = which(bm.sort$trt == t & bm.sort$plot == i)
-    plt.sp = bm.sort$spp[plt.ind]
-    df.uni.sp[k,"trt"] = t
-    df.uni.sp[k,"plot"] = i
-    df.uni.sp[k,"n.sp"] = length(plt.sp)
-    df.uni.sp[k,"n.nat.sp"] = sum(plt.sp %in% native.sp)
-    df.uni.sp[k,"n.inv.sp"] = length(plt.sp) - sum(plt.sp %in% native.sp)
-    k = k + 1
-  }
-}
-
-
-# sum up litter across quadrats by species
-lit.plt.sum = data.frame(matrix(nrow=n.plots, ncol=2))
-colnames(lit.plt.sum) = c("trt","mass.g")
-k = 1
-for (t in trts) {
-  for (i in 1:n.p) {
-    plt.ind = which(lit.dat$plot == paste(t, i, sep=""))
-    lit.plt.sum[k,"trt"] = t
-    lit.plt.sum[k,"mass.g"] = sum(lit.dat$dry.mass[plt.ind])
-    k = k + 1
-  }
-}
-lit.plt.sum$mass.g.m2 = lit.plt.sum$mass.g/5/(30^2)*(100^2)
