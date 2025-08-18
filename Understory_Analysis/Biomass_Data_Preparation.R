@@ -1,7 +1,6 @@
 path_to_repo = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Chapter2/Floodplain-Experiment-Repo"
 setwd(path_to_repo)
 
-library(ggplot2)
 library(ggfortify)
 library(patchwork)
 library(reshape2)
@@ -43,7 +42,7 @@ bm.all = rbind(bm.2022, bm.2023)
 bm.all$mass.g.m2 = bm.all$sum.mass/(30^2)*(100^2)
 
 # separate plot column into treatment and plot number 
-bm.all = bm.all %>% separate(plot, into = c("trt", "num"), sep = 1, remove=F)
+bm.all = bm.all %>% separate(plot, into=c("trt","num"), sep=1, remove=F)
 
 # isolate biomass data
 bm.dat = bm.all[!(bm.all$spp == "Herbaceous litter" | bm.all$spp == "Fine woody debris"),]
