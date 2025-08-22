@@ -1,4 +1,4 @@
-path_to_repo = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo"
+path_to_repo = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Chapter2/Floodplain-Experiment-Repo"
 setwd(path_to_repo)
 
 library(ggplot2)
@@ -35,12 +35,9 @@ all.dat = left_join(soil.dat[,-which(colnames(soil.dat) %in% c(meq.cols,"volumet
 df = all.dat[-which(all.dat$trt == "R"),]
 
 # update column names
-colnames(df)[6:40] = c("Temp","Moisture","BD","TN","TC","CN","TOC",
-                              text.cols,"pH","P","K","Ca","Mg","SOM",
-                              "NO3","NH4","CEC","POC",ag.cols,"TIC",
-                              "MAOC","HB","HL","FWD",
-                              "MB","PAB","HJB")
-colnames(df)[12] = "SOC"
+colnames(df)[6:40] = c("Temp","Moisture","BD","TN","TC","CN","SOC",text.cols,
+                       "pH","P","K","Ca","Mg","SOM","NO3","NH4","CEC","POC",
+                       ag.cols,"TIC","MAOC","HB","HL","FWD","MB","PAB","HJB")
 
 # run PCA
 PCA = prcomp(~ TIC+SOC+POC+CN+MWD+CEC+Sand+Clay+pH+P+K+Ca+Mg+TN+NO3+NH4+BD+Moisture+Temp+HL+FWD+MB+PAB+HJB,
@@ -55,13 +52,13 @@ autoplot(PCA, x=1, y=2, data=df,
          loadings.label.vjust = -0.15, loadings.label.hjust = 0.1) +
          labs(color="Treatment", shape="Plot")
 
-autoplot(PCA, x=1, y=3, data=df, 
+autoplot(PCA, x=2, y=3, data=df, 
          loadings=T, loadings.label=T, size=4, loadings.label.colour='black',
          col="trt.full", shape="num", loadings.label.size=4, 
          loadings.label.vjust = -0.15, loadings.label.hjust = 0.1) +
-  labs(color="Treatment", shape="Plot")
+         labs(color="Treatment", shape="Plot")
 
-autoplot(PCA, x=2, y=3, data=df, 
+autoplot(PCA, x=1, y=4, data=df, 
          loadings=T, loadings.label=T, size=4, loadings.label.colour='black',
          col="trt.full", shape="num", loadings.label.size=4, 
          loadings.label.vjust = -0.15, loadings.label.hjust = 0.1) +
@@ -100,48 +97,42 @@ mult = max(abs(df[, c('PC1','PC2','PC3')])) / max(abs(rot[, 1:3])) / 2
 rot[, 1:3] = rot[, 1:3] * mult
 
 # make plot
+# PC1 (16.9%), PC2 (12.5%), PC3 (10.7%)
+library(ggforce)
 p1 = ggplot(data=rot, 
-       aes(x=0, y=0, xend=PC1, yend=PC2, label=var)) +
-       geom_point(data=df, aes(x=PC1, y=PC2, color=trt.full, shape=num), 
-                  inherit.aes=FALSE, size=3) +
-       geom_segment(color='red', arrow=arrow(length=unit(0.03,"npc"))) +
-       geom_label_repel(aes(PC1 * 1.001, PC2 * 1.001)) +
-       theme_bw() + labs(color="Treatment", shape="Plot") +
-       scale_y_continuous(limits=c(-4,4)) + 
-       scale_x_continuous(limits=c(-4,4)) + 
-       labs(x="PC1 (16.9%)",y="PC2 (12.5%)") +
-       theme(text = element_text(size=14),
-             panel.grid = element_blank(),legend.position='none')
-p2 = ggplot(data=rot, 
-            aes(x=0, y=0, xend=PC1, yend=PC3, label=var)) +
-      geom_point(data=df, aes(x=PC1, y=PC3, color=trt.full, shape=num), 
-                 inherit.aes=FALSE, size=3) +
-      geom_segment(color='red', arrow=arrow(length=unit(0.03,"npc"))) +
-      geom_label_repel(aes(PC1 * 1.001, PC3 * 1.001)) +
-      theme_bw() + labs(color="Treatment", shape="Plot") +
-      scale_y_continuous(limits=c(-4,4)) + 
-      scale_x_continuous(limits=c(-4,4)) + 
-      labs(x="PC1 (16.9%)",y="PC3 (10.7%)") +
-      theme(text = element_text(size=14),
-            panel.grid = element_blank())
-p3 = ggplot(data=rot, 
-            aes(x=0, y=0, xend=PC2, yend=PC3, label=var)) +
-      geom_point(data=df, aes(x=PC2, y=PC3, color=trt.full, shape=num), 
-                 inherit.aes=FALSE, size=3) +
-      geom_segment(color='red', arrow=arrow(length=unit(0.03,"npc"))) +
-      geom_label_repel(aes(PC2 * 1.001, PC3 * 1.001)) +
-      theme_bw() + labs(color="Treatment", shape="Plot") +
-      scale_y_continuous(limits=c(-4,4)) + 
-      scale_x_continuous(limits=c(-4,4)) + 
-      labs(x="PC2 (12.5%)",y="PC3 (10.7%)") +
-      theme(text = element_text(size=14),
-            panel.grid = element_blank())
+            aes(x=0, y=0, xend=PC1, yend=PC2, label=var)) +
+            geom_point(data=df, aes(x=PC1, y=PC2, color=trt.full, shape=num), 
+                       inherit.aes=FALSE, size=3) +
+            geom_segment(color='red', arrow=arrow(length=unit(0.03,"npc"))) +
+            geom_label_repel(aes(PC1 * 1.001, PC2 * 1.001)) +
+            theme_bw() + labs(color="Treatment", shape="Plot") +
+            scale_y_continuous(limits=c(-4,4)) + 
+            scale_x_continuous(limits=c(-4,4)) + 
+            labs(x="PC1 (16.9%)",y="PC2 (12.5%)") +
+            theme(text = element_text(size=14),
+                  panel.grid = element_blank(),legend.position='none')
+p2 = ggplot(data=rot, aes(x=0, y=0, xend=PC1, yend=PC3, label=var)) +
+            geom_segment(color='red', arrow=arrow(length=unit(0.03,"npc"))) +
+            geom_label_repel(aes(PC1 * 1.001, PC3 * 1.001)) +
+            geom_point(data=df, aes(x=PC1, y=PC3, color=trt.full), 
+                       inherit.aes=FALSE, size=3) +
+            theme_bw() + labs(color="Treatment", shape="Plot") +
+            scale_y_continuous(limits=c(-4,4)) + 
+            scale_x_continuous(limits=c(-4,4)) + 
+            labs(x="PC1 (16.9%)",y="PC3 (10.7%)") +
+            theme(text = element_text(size=14),
+                  panel.grid = element_blank())
+            
+ggplot(df, aes(x=PC1, y=PC3, color=trt.full)) +
+       geom_mark_hull(aes(fill=trt.full), concavity=100) +
+       geom_point()
+p1
+p2
 p3 = p1 + p2
-p3
 
 # write plot
 ggsave("Soil_Analysis/Figures/Figure5_Soil_Vegetation_PCA.jpeg", 
-       plot=p3, width=34, height = 14, units="cm")
+       plot=p3, width=34, height = 14, units="cm", dpi=600)
 
 ########################################################################
 # Determine which variables are most related to each SOC variable

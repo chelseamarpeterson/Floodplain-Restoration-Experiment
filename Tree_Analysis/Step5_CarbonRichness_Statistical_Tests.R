@@ -1,6 +1,5 @@
-path_to_tree_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Tree_Analysis"
-path_to_repo = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo"
-setwd(path_to_tree_folder)
+path_to_repo = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Chapter2/Floodplain-Experiment-Repo"
+setwd(path_to_repo)
 
 library(readxl)
 library(tidyr)
@@ -19,14 +18,13 @@ n.trt = length(trts)
 ## statistical analyses on live and dead C stock components by plot ----
 
 # read in biomass C stock estimates
-veg.soil.df = read.csv("Clean_Data/Clean_Veg_Soil_Cstocks_Richness.csv")
+veg.soil.df = read.csv("Tree_Analysis/Clean_Data/Clean_Veg_Soil_Cstocks_Richness.csv")
 
 # estimate aggregate C stocks in different pools
 veg.soil.df$total.live.carbon =  veg.soil.df$live.woody.c.stock + veg.soil.df$live.stem.carbon + veg.soil.df$total.C.Mg.ha
 veg.soil.df$total.dead.carbon =  veg.soil.df$snag.carbonmin + veg.soil.df$dead.stem.carbonmin + veg.soil.df$cwd.carbon + veg.soil.df$int.fwd.carbon + veg.soil.df$FWD.C.Mg.ha
 veg.soil.df$total.veg.carbon = veg.soil.df$total.live.carbon + veg.soil.df$total.dead.carbon
 veg.soil.df$total.ecosystem.carbon = veg.soil.df$TC + veg.soil.df$total.veg.carbon
-veg.soil.df$n.total = veg.soil.df$N.herb + veg.soil.df$N.tree
 
 # variable names
 vars = colnames(veg.soil.df)[4:30]
@@ -46,14 +44,6 @@ for (i in 1:n.v) {
   all.sd[[v]] = sd(veg.soil.df[,v])
 }
 
-# look at histograms
-#par(mfrow=c(3,4))
-#for (i in 1:n.v) {
-#  v = vars[i]
-  #hist(all.df[[v]]$y)
-#  hist(log(all.df[[v]]$y), main="")
-#}
-
 # fit simple models
 set.seed(12)
 m.all = list()
@@ -71,34 +61,25 @@ for (i in 1:n.v) {
 for (i in 1:n.v) { traceplot(m.all[[vars[i]]]) }
 for (i in 1:n.v) { trankplot(m.all[[vars[i]]]) }
 
-# get posterior distributions
-post.all = list()
-for (i in 1:n.v) {
-  v = vars[[i]]
-  post.all[[v]] = extract.samples(m.all[[v]])
-}
-
 # variable in new order with labels
-var.order = c("n.total","N.herb","N.tree",
-              "MAOM.C","POM.C","SOC","TIC","TC",
-              "int.fwd.carbon","cwd.carbon",
-              "snag.carbonmin","dead.stem.carbonmin",
+var.order = c("n.total","n.herb","n.tree",
+              "MAOC","POC","SOC","TIC","TC",
+              "int.fwd.carbon","cwd.carbon","snag.carbonmin","dead.stem.carbonmin",
               "live.woody.c.stock","live.stem.carbon",
               "FWD.C.Mg.ha","HL.C.Mg.ha","total.C.Mg.ha",
               "total.live.carbon","total.dead.carbon",
-              "total.veg.carbon","total.ecosystem.carbon",
-              "FWD.CN.ratio","HL.CN.ratio","herb.bm.CN.ratio")
+              "total.veg.carbon","total.ecosystem.carbon")
 var.labels = c("Total richness","Herbaceous species","Tree species",
-               "MAOM-C (< 53 \U00B5m)","POM-C (\u2265 53 \U00B5m)",
-               "TOC","Carbonates","TC",
+               "MAOC","POC","SOC","TIC","TC",
                "Fine woody debris (2.5-7.5 cm)","Coarse woody debris (\u2265 7.6 cm)",
                "Standing dead trees (\u2265 2.5 cm)","Dead stems (< 2.5 cm)",
                "Live trees (\u2265 2.5 cm)","Live stems (< 2.5 cm)",
                "Fine woody debris (< 2.5 cm)","Herbaceous litter","Herbaceous biomass",
                "Total live vegetation","Total dead vegetation",
-               "Total vegetation","Total ecosystem",
-               "Fine woody debris (< 2.5 cm) C:N ratio",
-               "Herbaceous litter C:N ratio","Herbaceous biomass C:N ratio")
+               "Total vegetation","Total ecosystem")
+length(vars)
+length(var.order)
+length(var.labels)
 
 # extract posterior samples and create dataframes
 all.samples = list()
@@ -106,7 +87,7 @@ all.a = list()
 a.df = data.frame(matrix(nrow=0, ncol=7))
 colnames(a.df) = c("var",trts)
 n.v.short = length(var.order)
-for (i in 1:n.v.short) {
+for (i in 1:n.v) {
   v1 = var.order[i]
   v2 = var.labels[i]
   
@@ -122,10 +103,10 @@ for (i in 1:n.v.short) {
 }
 
 # create df with means and HPDIs by treatment and species
-post.df = data.frame(matrix(nrow=n.v.short*n.trt, ncol=8))
+post.df = data.frame(matrix(nrow=length(var.order)*n.trt, ncol=8))
 colnames(post.df) = c("tid","trt","var","mean","5","95","25","75")
 k = 1
-for (j in 1:n.v.short) {
+for (j in 1:length(var.order)) {
   for (i in 1:n.trt) {
     v = var.labels[j]
     a.v = all.a[[v]]
@@ -145,7 +126,7 @@ for (j in 1:n.v.short) {
 }
 
 # write posterior HPDIs and means to file
-write.csv(post.df,"Posteriors/CarbonRichness_Means_Intervals_5Chains.csv",
+write.csv(post.df,"Tree_Analysis/Posteriors/CarbonRichness_Means_Intervals_5Chains.csv",
           row.names=F)
 
 
