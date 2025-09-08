@@ -1,4 +1,4 @@
-path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Soil_Analysis"
+path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Chapter2/Floodplain-Experiment-Repo/Soil_Analysis"
 setwd(path_to_soil_folder)
 
 library(rethinking)
@@ -56,9 +56,6 @@ for (t in 1:6) {
     k = k + 1
   }
 }
-
-# add maoc:poc ratio
-soil.dat$maoc_poc = soil.dat$maoc/soil.dat$poc
 
 # make simple list for Bayes analysis
 vars = c("som","bulk.n","bulk.c","bulk.cn","toc","poc","tic","maoc","temp",

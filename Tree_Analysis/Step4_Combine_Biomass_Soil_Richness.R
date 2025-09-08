@@ -1,6 +1,8 @@
 path_to_repo = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Chapter2/Floodplain-Experiment-Repo"
 setwd(path_to_repo)
 
+library(dplyr)
+
 # treatment labels
 trts = c("A","B","C","D","E","R")
 
@@ -19,6 +21,25 @@ c.data = right_join(c.data,
                     soil.c.data[,c("trt","trt.full","num","MAOC","POC","SOC","TIC","TC")], 
                     by=c("trt","trt.full","num"))
 
+## estimate aggregate C stocks in different pools
+c.data = c.data %>%
+         mutate(total.live.carbon = live.woody.c.stock + live.stem.carbon + HB.C.Mg.ha,
+                total.dead.carbon = snag.carbonmin + dead.stem.carbonmin + cwd.carbon + int.fwd.carbon + FWD.C.Mg.ha + HL.C.Mg.ha)
+c.data = c.data %>%
+         mutate(total.veg.carbon = total.live.carbon + total.dead.carbon,
+                total.ecosystem.carbon = TC + total.veg.carbon)
+
+# estimate aggregate C stocks if frax pen were alive
+c.data = c.data %>%
+         mutate(woody.c.stock.frax.live = live.woody.c.stock + snag.frax.liveC,
+                snag.c.stock.frax.live = snag.carbonmin - snag.frax.deadC)
+c.data = c.data %>%
+         mutate(total.live.carbon.frax.live = woody.c.stock.frax.live + live.stem.carbon + HB.C.Mg.ha,
+                total.dead.carbon.frax.live = snag.c.stock.frax.live + dead.stem.carbonmin + cwd.carbon + int.fwd.carbon + FWD.C.Mg.ha + HL.C.Mg.ha)
+c.data = c.data %>%
+         mutate(total.veg.carbon.frax.live = total.live.carbon.frax.live + total.dead.carbon.frax.live,
+                total.ecosystem.carbon.frax.live = TC + total.veg.carbon.frax.live)
+ 
 ## read in tree species data
 tree.C.df = read.csv("Tree_Analysis/Clean_Data/WoodyBiomass_C_Stocks_By_Species.csv", header=T)
 

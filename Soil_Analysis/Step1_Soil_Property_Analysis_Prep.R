@@ -1,4 +1,4 @@
-path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Soil_Analysis"
+path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Chapter2/Floodplain-Experiment-Repo/Soil_Analysis"
 setwd(path_to_soil_folder)
 
 library(ggplot2)
@@ -177,6 +177,9 @@ for (i in 1:6) { soil.data$trt.full[which(soil.data$trt == trts[i])] = trt.names
 soil.data$bulk.c = pmax(soil.data$bulk.c, soil.data$toc)
 soil.data$tic = soil.data$bulk.c - soil.data$toc
 soil.data$maoc = pmax(soil.data$toc - soil.data$poc, 0)
+
+# calculate POC:MAOC ratio
+soil.data$poc_maoc = soil.data$poc/soil.data$maoc
 
 # write all soil data at quadrat level to csv
 id.vars = c("plot","trt","trt.full","num","quad")

@@ -35,12 +35,12 @@ all.dat = left_join(soil.dat[,-which(colnames(soil.dat) %in% c(meq.cols,"volumet
 df = all.dat[-which(all.dat$trt == "R"),]
 
 # update column names
-colnames(df)[6:40] = c("Temp","Moisture","BD","TN","TC","CN","SOC",text.cols,
+colnames(df)[6:41] = c("Temp","Moisture","BD","TN","TC","CN","SOC",text.cols,
                        "pH","P","K","Ca","Mg","SOM","NO3","NH4","CEC","POC",
-                       ag.cols,"TIC","MAOC","HB","HL","FWD","MB","PAB","HJB")
+                       ag.cols,"TIC","MAOC","POC_MAOC","HB","HL","FWD","MB","PAB","HJB")
 
 # run PCA
-PCA = prcomp(~ TIC+SOC+POC+CN+MWD+CEC+Sand+Clay+pH+P+K+Ca+Mg+TN+NO3+NH4+BD+Moisture+Temp+HL+FWD+MB+PAB+HJB,
+PCA = prcomp(~ SOC+POC_MAOC+TN+CN+MWD+CEC+Sand+Clay+pH+P+NO3+NH4+BD+Moisture+Temp+HL+FWD+MB+PAB+HJB,
                  data=df, scale=T, center=T)
 
 # plot PCA with autoplot
@@ -52,13 +52,13 @@ autoplot(PCA, x=1, y=2, data=df,
          loadings.label.vjust = -0.15, loadings.label.hjust = 0.1) +
          labs(color="Treatment", shape="Plot")
 
-autoplot(PCA, x=2, y=3, data=df, 
+autoplot(PCA, x=1, y=3, data=df, 
          loadings=T, loadings.label=T, size=4, loadings.label.colour='black',
          col="trt.full", shape="num", loadings.label.size=4, 
          loadings.label.vjust = -0.15, loadings.label.hjust = 0.1) +
          labs(color="Treatment", shape="Plot")
 
-autoplot(PCA, x=1, y=4, data=df, 
+autoplot(PCA, x=2, y=3, data=df, 
          loadings=T, loadings.label=T, size=4, loadings.label.colour='black',
          col="trt.full", shape="num", loadings.label.size=4, 
          loadings.label.vjust = -0.15, loadings.label.hjust = 0.1) +
@@ -68,17 +68,17 @@ autoplot(PCA, x=1, y=4, data=df,
 summary(PCA)
 PCA$rotation[,1:5]
 
-sort(PCA$rotation[,1]) # Silt/BD - SOM/CEC
-sort(PCA$rotation[,2]) # Sand - Silt - Clay/P
-sort(PCA$rotation[,3]) # Clay/sand - CEC/Silt
+sort(PCA$rotation[,1])
+sort(PCA$rotation[,2])
+sort(PCA$rotation[,3])
 
 # Percentage of variance explained
 eigenvalues <- PCA$sdev^2
 plot(eigenvalues/sum(eigenvalues), type = "b",
      xlab = "Principal Component",
      ylab = "Percentage of Variance Explained", ylim=c(0,0.2))
-round(eigenvalues/sum(eigenvalues)*100,2)
-round(cumsum(eigenvalues/sum(eigenvalues)*100),2)
+round(eigenvalues/sum(eigenvalues)*100,1)
+round(cumsum(eigenvalues/sum(eigenvalues)*100),1)
 
 ## plot PCA with ggplot/ggrepel
 
@@ -97,42 +97,104 @@ mult = max(abs(df[, c('PC1','PC2','PC3')])) / max(abs(rot[, 1:3])) / 2
 rot[, 1:3] = rot[, 1:3] * mult
 
 # make plot
-# PC1 (16.9%), PC2 (12.5%), PC3 (10.7%)
 library(ggforce)
+s = 1.5
 p1 = ggplot(data=rot, 
-            aes(x=0, y=0, xend=PC1, yend=PC2, label=var)) +
+            aes(x=0, y=0, xend=s*PC1, yend=s*PC2, label=var)) +
             geom_point(data=df, aes(x=PC1, y=PC2, color=trt.full, shape=num), 
                        inherit.aes=FALSE, size=3) +
             geom_segment(color='red', arrow=arrow(length=unit(0.03,"npc"))) +
-            geom_label_repel(aes(PC1 * 1.001, PC2 * 1.001)) +
+            geom_label_repel(aes(s*PC1, s*PC2)) +
             theme_bw() + labs(color="Treatment", shape="Plot") +
-            scale_y_continuous(limits=c(-4,4)) + 
-            scale_x_continuous(limits=c(-4,4)) + 
-            labs(x="PC1 (16.9%)",y="PC2 (12.5%)") +
+            scale_y_continuous(limits=c(-4.1,4.1),breaks=seq(-4,4,by=2)) + 
+            scale_x_continuous(limits=c(-4.1,4.1),breaks=seq(-4,4,by=2)) + 
+            labs(x="PC1 (15.5%)",y="PC2 (12.3%)") +
             theme(text = element_text(size=14),
                   panel.grid = element_blank(),legend.position='none')
-p2 = ggplot(data=rot, aes(x=0, y=0, xend=PC1, yend=PC3, label=var)) +
-            geom_segment(color='red', arrow=arrow(length=unit(0.03,"npc"))) +
-            geom_label_repel(aes(PC1 * 1.001, PC3 * 1.001)) +
+p2 = ggplot(data=rot, 
+            aes(x=0, y=0, xend=s*PC1, yend=s*PC3, label=var)) +
             geom_point(data=df, aes(x=PC1, y=PC3, color=trt.full), 
-                       inherit.aes=FALSE, size=3) +
+                       inherit.aes=FALSE, size=3) +          
+            geom_segment(color='red', arrow=arrow(length=unit(0.03,"npc"))) +
+                         geom_label_repel(aes(s*PC1, s*PC3)) +
             theme_bw() + labs(color="Treatment", shape="Plot") +
-            scale_y_continuous(limits=c(-4,4)) + 
-            scale_x_continuous(limits=c(-4,4)) + 
-            labs(x="PC1 (16.9%)",y="PC3 (10.7%)") +
+            scale_y_continuous(limits=c(-4.1,4.1),breaks=seq(-4,4,by=2)) + 
+            scale_x_continuous(limits=c(-4.1,4.1),breaks=seq(-4,4,by=2)) + 
+            labs(x="PC1 (15.5%)",y="PC3 (11.6%)") +
             theme(text = element_text(size=14),
                   panel.grid = element_blank())
-            
-ggplot(df, aes(x=PC1, y=PC3, color=trt.full)) +
-       geom_mark_hull(aes(fill=trt.full), concavity=100) +
-       geom_point()
-p1
-p2
 p3 = p1 + p2
+p3
 
 # write plot
-ggsave("Soil_Analysis/Figures/Figure5_Soil_Vegetation_PCA.jpeg", 
+ggsave("Figures/Figure5_Soil_Vegetation_PCA.jpeg", 
        plot=p3, width=34, height = 14, units="cm", dpi=600)
+
+## test redundancy analysis
+library(vegan)
+
+y.data = df[,c("SOC","POC","MAOC","POC_MAOC")]
+x.vars = c("TN","CN","MWD","CEC","Sand","Clay","pH","P","NO3",
+           "NH4","BD","Moisture","Temp","HL","FWD","MB","PAB","HJB")
+x.data = df[,x.vars]
+rda_model <- rda(y.data ~., data = x.data)
+summary(rda_model)
+#anova(rda_model, by = "terms")
+#anova(rda_model, by = "axis")
+plot(rda_model)
+smry <- summary(rda_model)
+df1  <- data.frame(smry$sites[,1:3])       # PC1 and PC2
+df1$trt.full = df$trt.full
+df2  <- data.frame(smry$species[,1:3])     # loadings for PC1 and PC2
+df3  <- data.frame(smry$biplot[,1:3])
+
+s1 = sort(df3$RDA1, index.return=T)
+rda1.df = data.frame("names"=rownames(df3)[s1$ix],
+                     "values"=df3$RDA1[s1$ix])
+rda1.df
+
+s2 = sort(df3$RDA2, index.return=T)
+rda2.df = data.frame("names"=rownames(df3)[s2$ix],
+                     "values"=df3$RDA2[s2$ix])
+rda2.df
+
+s3 = sort(df3$RDA3, index.return=T)
+rda3.df = data.frame("names"=rownames(df3)[s3$ix],
+                     "values"=df3$RDA3[s3$ix])
+rda3.df
+
+
+rda.plot1 <- ggplot(data=df1) + 
+                   geom_point(aes(x=RDA1, y=RDA2, 
+                                  color=factor(trt.full, levels=trt.names),
+                                  shape=factor(trt.full, levels=trt.names)),
+                              size=2) + 
+                   guides(shape=guide_legend(title="Treatment"),
+                          color=guide_legend(title="Treatment")) +
+                   geom_hline(yintercept=0, linetype="dotted") +
+                   geom_vline(xintercept=0, linetype="dotted") +
+                   coord_fixed() + 
+                   geom_segment(data=df3, 
+                                aes(x=0, xend=RDA1, y=0, yend=RDA2), 
+                                color="blue", 
+                                arrow=arrow(length=unit(0.01,"npc"))) +
+                   geom_segment(data=df2, 
+                                aes(x=0, xend=RDA1, y=0, yend=RDA2), 
+                                color="red", 
+                                arrow=arrow(length=unit(0.01,"npc"))) +
+                   geom_label_repel(data=df3, 
+                                    aes(x=RDA1, y=RDA2, label=rownames(df3)),
+                                    color="blue",fill="transparent",alpha=0.7) +
+                   geom_label_repel(data=df2,
+                                    aes(x=RDA1, y=RDA2, label=rownames(df2)),
+                                    color="red", fill="transparent",alpha=0.7) + #
+                   ylim(c(-1.03,1.03)) + xlim(c(-0.6,1.75)) +
+                   labs(x="RDA1 (53.3%)",y="RDA2 (1.9%)")
+rda.plot1
+
+# write plot
+ggsave("Figures/Figure5_Soil_Vegetation_RDA.jpeg", 
+       plot=rda.plot1, width=20, height = 14, units="cm", dpi=600)
 
 ########################################################################
 # Determine which variables are most related to each SOC variable
@@ -140,8 +202,9 @@ library(rethinking)
 
 # make data lists
 out = c("plot","trt","trt.full","num","quad","volumetric.moisture",
-        "k.meq","ca.meq","mg.meq","h.meq","pon","fpom")
-c.vars = c("bulk.c","toc","poc","maoc","tic")
+        "k.meq","ca.meq","mg.meq","h.meq","pon","fpom",
+        "som","poc","maoc","tic")
+c.vars = c("toc")
 x.vars = colnames(all.dat)[-which(colnames(all.dat) %in% c(c.vars,out))]
 n.c = length(c.vars)
 n.x = length(x.vars)
@@ -164,12 +227,7 @@ c.models = list()
 for (i in 1:n.c) {
   c = c.vars[i]
   c.models[[c]] = list()
-  if (i == 1) {
-    e = 17
-  } else {
-    e = n.x
-  }
-  for (j in 1:e) {
+  for (j in 1:n.x) {
     x = x.vars[j]
     c.models[[c]][[x]] = ulam(alist(y ~ normal(mu, sigma),
                                log(mu) <- a*x,
@@ -194,23 +252,13 @@ for (i in 1:n.c) {
                    c.models[[c]][["clay"]],
                    c.models[[c]][["ph"]],
                    c.models[[c]][["p"]],
-                   c.models[[c]][["k"]],
-                   c.models[[c]][["ca"]],
-                   c.models[[c]][["mg"]],
                    c.models[[c]][["no3"]],
                    c.models[[c]][["nh4"]],
                    c.models[[c]][["cec"]],
-                   c.models[[c]][["g475mm"]],
-                   c.models[[c]][["g2mm"]],
-                   c.models[[c]][["g250um"]],
-                   c.models[[c]][["g53um"]],
+                   c.models[[c]][["poc_maoc"]],
                    c.models[[c]][["mwd"]],
-                   c.models[[c]][["Herbaceous.biomass"]],
                    c.models[[c]][["Herbaceous.litter"]],
                    c.models[[c]][["Fine.woody.debris"]],
-                   c.models[[c]][["Mixed.species"]],
-                   c.models[[c]][["Phalaris.arundinacea"]],
-                   c.models[[c]][["Humulus.japonicus"]],
                    func=WAIC)
   waic.c$y.var = c
   waic.c$x.var = rownames(waic.c)
@@ -219,21 +267,21 @@ for (i in 1:n.c) {
 
 # rename model column
 waic.df$model = rep(0,nrow(waic.df))
+waic.df$coef = rep(0,nrow(waic.df))
 for (i in 1:n.x) {
-  x.long.label = paste("c.models[[c]][[\"",x.vars[i],"\"]]",sep="")
-  x.short.label = x.vars[i]
+  x = x.vars[i]
+  x.long.label = paste("c.models[[c]][[\"", x, "\"]]",sep="")
+  x.short.label = x
   waic.df$model[which(waic.df$x.var == x.long.label)] = x.short.label
+  #sample.x = samples(c.models[["toc"]][[x]])
+  #waic.df$coef[which(waic.df$x.var == x.long.label)] = c.models[["toc"]][[x]]
 }
 
-model.sort = sort(waic.df[waic.df$y.var == "maoc","WAIC"],index.return=T)
-model.order = waic.df[waic.df$y.var == "maoc","model"][model.sort$ix]
-ggplot(waic.df, aes(x=WAIC, 
-                    y=factor(model,levels=model.order))) + 
+model.sort = sort(waic.df[waic.df$y.var == "toc","WAIC"],index.return=T)
+model.order = waic.df[waic.df$y.var == "toc","model"][model.sort$ix]
+ggplot(waic.df, 
+       aes(x=WAIC, y=factor(model, levels=model.order))) + 
        geom_point() + 
-       #geom_errorbarh(aes(xmin=WAIC-SE,
-      #                    xmax=WAIC+SE,
-      #                    y=factor(model, labels=model.order)),
-      #                height=0.2) +
        facet_wrap(.~y.var, scales="free_x")
 
 write.csv(waic.df,"Soil_Analysis/Posteriors/Univariate_Linear_Model_WAIC_Comparison.csv",

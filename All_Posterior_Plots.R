@@ -1,5 +1,5 @@
-path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Chapter2/Floodplain-Experiment-Repo"
-setwd(path_to_soil_folder)
+path_to_repo= "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Chapter2/Floodplain-Experiment-Repo"
+setwd(path_to_repo)
 
 library(ggplot2)
 library(patchwork)
@@ -28,25 +28,19 @@ soil.var.labs = c("SOM (%)","TOC (%)","TIC (%)","MAOC (%)","POC (\u2265 53 \U00B
                   "<53 \u03bcm","Mean-weight diameter (mm)")
 
 # stock and richness variables
-stock.vars = c("Total richness","Herbaceous species","Tree species",
-               "MAOC","POC","SOC","TIC","TC",
-               "Fine woody debris (2.5-7.5 cm)","Coarse woody debris (\u2265 7.6 cm)",
-               "Standing dead trees (\u2265 2.5 cm)","Dead stems (< 2.5 cm)",
-               "Live trees (\u2265 2.5 cm)","Live stems (< 2.5 cm)",
-               "Fine woody debris (< 2.5 cm)","Herbaceous litter","Herbaceous biomass",
-               "Total live vegetation","Total dead vegetation",
-               "Total vegetation","Total ecosystem")
-stock.var.labs = c("Total richness","Herbaceous species","Tree species",
-                   "MAOC","POC","SOC","TIC","TC",
-                   "Fine woody debris (2.5-7.5 cm)","Coarse woody debris (\u2265 7.6 cm)",
-                   "Standing dead trees (\u2265 2.5 cm)","Dead stems (< 2.5 cm)",
-                   "Live trees (\u2265 2.5 cm)","Live stems (< 2.5 cm)",
-                   "Fine woody debris (< 2.5 cm)","Herbaceous litter","Herbaceous biomass",
-                   "Total live vegetation","Total dead vegetation",
-                   "Total vegetation","Total ecosystem","Fine woody debris (< 2.5 cm) C:N ratio",
-                   "Herbaceous litter C:N ratio","Herbaceous biomass C:N ratio")
-df.stock$lab = rep(0, nrow(df.stock))
-for (i in 1:length(stock.vars)) { df.stock$lab[which(df.stock$var == stock.vars[i])] = stock.var.labs[i] }
+stock.var.labels = c("Fine woody debris (2.5-7.5 cm)","Coarse woody debris (\u2265 7.6 cm)",
+                     "Standing dead trees (\u2265 2.5 cm)","Live F. pennsylvanica (\u2265 2.5 cm)",
+                     "Standing dead F. pennsylvanica (\u2265 2.5 cm)","Diff. F. pennsylvanica (Live-Dead)",
+                     "Dead stems (< 2.5 cm)","Live stems (< 2.5 cm)","Live trees (\u2265 2.5 cm)",
+                     "Herbaceous biomass","Mixed biomass","P. arundinacea biomass",
+                     "H. japonicus biomass","Herbaceous litter","Fine woody debris",
+                     "Fine woody debris C:N ratio","Herbaceous litter C:N ratio","Herbaceous biomass C:N ratio",
+                     "MAOC","POC","SOC","TIC","TC",
+                     "Herbaceous species","Tree species","Total richness",
+                     "Total live vegetation","Total dead vegetation","Total vegetation","Total ecosystem",
+                     "Live trees w/ F. pennsylvanica","Standing dead trees w/o F. pennsylvanica",
+                     "Total live w/ F. pennsylvanica","Total dead w/o F. pennsylvanica",
+                     "Total vegetation w/o F. pennsylvanica death","Total ecosystem w/o F. pennsylvanica death")
 
 # print soil results for tables
 i = 33
@@ -58,13 +52,11 @@ cbind(df.soil[which(df.soil$v == soil.var.labs[i]),c("v","t")],
       round(df.soil[which(df.soil$v == soil.var.labs[i]),c("mean","X5","X95")],3))
 
 # print stock and richness results for tables
-i = 21
-print(cbind(df.stock[which(df.stock$var == var.labels[i]),c("var","trt")],
-            round(df.stock[which(df.stock$var == var.labels[i]),c("mean","X5","X95")],1)))
-print(cbind(df.stock[which(df.stock$var == var.labels[i]),c("var","trt")],
-            round(df.stock[which(df.stock$var == var.labels[i]),c("mean","X5","X95")],2)))
-print(cbind(df.stock[which(df.stock$var == var.labels[i]),c("var","trt")],
-            round(df.stock[which(df.stock$var == var.labels[i]),c("mean","X5","X95")],3)))
+i = 31
+print(cbind(df.stock[which(df.stock$var == stock.var.labels[i]),c("var","trt")],
+            round(df.stock[which(df.stock$var == stock.var.labels[i]),c("mean","X5","X95")],1)))
+print(cbind(df.stock[which(df.stock$var == stock.var.labels[i]),c("var","trt")],
+            round(df.stock[which(df.stock$var == stock.var.labels[i]),c("mean","X5","X95")],2)))
 
 ################################################################################
 # make combined plot for carbon concentrations and stocks
@@ -87,7 +79,6 @@ for (i in 1:6) {
 c.labs.new = c("TIC","POC","MAOC")
 df.stack.c$lab = rep(0, nrow(df.stack.c))
 for (i in 1:3) { df.stack.c$lab[which(df.stack.c$v == c.labs[i])] = c.labs.new[i] }
-#c.palette <- tail(brewer.pal(6,"Oranges"),3)
 s.palette <- c(brewer.pal(9,"Greys")[5],brewer.pal(11,"BrBG")[c(2,1)])
 p.c.concentrations = ggplot(df.stack.c[which(df.stack.c$v %in% c.labs),], 
                             aes(y=factor(t, levels=trt.names), x=mean, 
@@ -104,12 +95,13 @@ p.c.concentrations = ggplot(df.stack.c[which(df.stack.c$v %in% c.labs),],
                                        label.r=unit(0,"pt"),label.size=0,
                                        size=8,fontface="bold") + 
                             guides(fill="none")
+p.c.concentrations
 
 stack.vars4 = c("TIC","POC","MAOC")
 ipcc.vars4 = c("Annual crops","Revegetated cropland","Natural wetland")
-p.c.stocks = ggplot(df.stock[which(df.stock$lab %in% stack.vars4),], 
+p.c.stocks = ggplot(df.stock[which(df.stock$var %in% stack.vars4),], 
                     aes(y=factor(trt, levels=trt.names), 
-                        x=mean, fill=factor(lab, levels=stack.vars4))) +
+                        x=mean, fill=factor(var, levels=stack.vars4))) +
                     geom_bar(stat="identity",position="stack") + 
                     scale_fill_manual(values=s.palette) +
                     labs(fill="",y="",x="Stock (Mg/ha)",title="") +
@@ -132,6 +124,7 @@ p.c.stocks = ggplot(df.stock[which(df.stock$lab %in% stack.vars4),],
                                color="black",fill=alpha("white",0.9),
                                label.r=unit(0,"pt"),label.size=0,
                                size=8,fontface="bold")
+p.c.stocks
 p.c.all = p.c.concentrations + p.c.stocks
 p.c.all
 ggsave("Figures/Figure3_Soil_Carbon_Concentrations_and_Stocks.jpeg", 
@@ -313,14 +306,16 @@ TC.est.df = data.frame(matrix(nrow=2,ncol=0))
 TC.est.df$`IPCC total organic C` = c("Restored forested wetland","Mature forested wetland")
 TC.est.df$value = c(132.5, 180.1)
 
+v.palette <- brewer.pal(11,"RdYlGn")[c(7,9,11)]
+d.palette <- brewer.pal(9,"YlOrBr")[seq(3,8)]
 # debris plot
 stack.vars.d = c("Herbaceous litter","Fine woody debris (< 2.5 cm)",
                 "Fine woody debris (2.5-7.5 cm)","Coarse woody debris (\u2265 7.6 cm)",
                 "Dead stems (< 2.5 cm)","Standing dead trees (\u2265 2.5 cm)")
 ipcc.vars.d = c("Restored temperate forest","Mature temperate forest")
-p.d = ggplot(df.stock[which(df.stock$lab %in% stack.vars.d),], 
+p.d = ggplot(df.stock[which(df.stock$var %in% stack.vars.d),], 
              aes(y=factor(trt, levels=trt.names), x=mean, 
-                 fill=factor(lab, levels=stack.vars.d))) +
+                 fill=factor(var, levels=stack.vars.d))) +
              geom_bar(stat="identity",position="stack") + 
              labs(fill="",y="",
                   x="Posterior mean stock (Mg/ha)",title="") + 
@@ -331,7 +326,6 @@ p.d = ggplot(df.stock[which(df.stock$lab %in% stack.vars.d),],
                             linetype=factor(`IPCC dead wood and litter`,
                                             levels=ipcc.vars.d)), 
                         linewidth=1) +
-             
              scale_color_manual(values=c("red","blue")) +
              scale_linetype_manual(values=c("solid","dashed")) + 
              scale_fill_manual(values=d.palette) + 
@@ -353,9 +347,9 @@ p.d
 #  live vegetation plot
 stack.vars.l = c("Herbaceous biomass","Live stems (< 2.5 cm)","Live trees (\u2265 2.5 cm)")
 ipcc.vars.l = c("Restored temperate forest","Mature temperate forest")
-p.l = ggplot(df.stock[which(df.stock$lab %in% stack.vars.l),], 
+p.l = ggplot(df.stock[which(df.stock$var %in% stack.vars.l),], 
              aes(y=factor(trt, levels=trt.names), x=mean, 
-                 fill=factor(lab, levels=stack.vars.l))) +
+                 fill=factor(var, levels=stack.vars.l))) +
              geom_bar(stat="identity",position="stack") + 
              labs(fill="",y="",
                   x="Posterior mean stock (Mg/ha)",title="") + 
@@ -386,12 +380,10 @@ p.l
 
 # total ecosystem
 stack.vars.e = c("TIC","SOC","Total dead vegetation","Total live vegetation")
-v.palette <- brewer.pal(11,"RdYlGn")[c(7,9,11)]
-d.palette <- brewer.pal(9,"YlOrBr")[seq(3,8)]
 ipcc.vars.e = c("Restored forested wetland","Mature forested wetland")
-p.e = ggplot(df.stock[which(df.stock$lab %in% stack.vars.e),], 
+p.e = ggplot(df.stock[which(df.stock$var %in% stack.vars.e),], 
              aes(y=factor(trt, levels=trt.names), x=mean, 
-                 fill=factor(lab, levels=stack.vars.e))) +
+                 fill=factor(var, levels=stack.vars.e))) +
             geom_bar(stat="identity",position="stack") + 
             labs(fill="",y="",
                  x="Posterior mean stock (Mg/ha)",title="") +
@@ -426,11 +418,11 @@ p.e
 # richness plot
 r.palette <- tail(brewer.pal(8,"BuPu"),3)
 stack.vars.r = c("Total richness","Herbaceous species","Tree species")
-df.sp = df.stock[which(df.stock$v %in% stack.vars.r),]
+df.sp = df.stock[which(df.stock$var %in% stack.vars.r),]
 p.r = ggplot(data=df.sp) + 
              geom_bar(aes(y=factor(trt, levels=trt.names), 
                           x=mean, 
-                          fill=factor(lab, levels=stack.vars.r)),
+                          fill=factor(var, levels=stack.vars.r)),
                           stat="identity",
                           position=position_dodge(width=0.9)) +
              labs(fill="",y="",x="Posterior mean richness",title="") + 
@@ -450,7 +442,7 @@ p.r
 p.c.stocks = (p.l+theme(plot.margin=unit(c(0,2,0,0),"pt"))+p.d)/(p.e+theme(plot.margin=unit(c(0,1.1,0,0),"pt"))+p.r)
 p.c.stocks
 
-ggsave("Figures/Veg_Ecosystem_Cstocks_Richness.jpeg", 
-       plot=p.c.stocks, width=40, height=23, units="cm")
+ggsave("Figures/Figure6_Veg_Ecosystem_Cstocks_Richness.jpeg", 
+       plot=p.c.stocks, width=40, height=23, units="cm", dpi=600)
 
 

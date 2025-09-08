@@ -1,22 +1,5 @@
-path_to_tree_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Tree_Analysis"
 path_to_repo = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo"
 setwd(path_to_tree_folder)
-
-# comparing biomass C:N ratios
-cn.vars = c("Fine woody debris (< 2.5 cm) C:N ratio",
-            "Herbaceous litter C:N ratio","Herbaceous biomass C:N ratio")
-p.cn = ggplot(int.df[int.df$var %in% cn.vars,], 
-       aes(y=factor(trt, levels=trt.names), x=mean)) +
-       geom_errorbar(aes(xmin=X5, xmax=X95), width=0.25, color="black") +
-       geom_errorbar(aes(xmin=X25, xmax=X75), width=0.25, color="blue") +
-       geom_point() + labs(y="",x="Posterior estimate") +
-       facet_wrap(.~factor(var, levels=var.labels), 
-                   ncol=3, scales="free_x") + 
-       theme(text = element_text(size=12))
-
-ggsave("Figures/CNratio.jpeg", 
-       plot = p.cn, width = 23, 
-       height = 7, units="cm")
 
 ################################################################################
 ### run PCA on biomass data
