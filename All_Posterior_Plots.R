@@ -8,8 +8,12 @@ library(rethinking)
 library(dplyr)
 library(tidyr)
 library(reshape2)
+library(ggtext)
+library(scales)
 
 ################################################################################
+# Step 1: define treatment and variable names, load datasets 
+
 # treatment names
 trts = c("A","B","C","D","E","R")
 trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
@@ -42,7 +46,10 @@ stock.var.labels = c("Fine woody debris (2.5-7.5 cm)","Coarse woody debris (\u22
                      "Total live w/ F. pennsylvanica","Total dead w/o F. pennsylvanica",
                      "Total vegetation w/o F. pennsylvanica death","Total ecosystem w/o F. pennsylvanica death")
 
-# print soil results for tables
+################################################################################
+# Step 2: print results for appendix tables
+
+# soil means and 90% intervals
 i = 33
 cbind(df.soil[which(df.soil$v == soil.var.labs[i]),c("v","t")],
       round(df.soil[which(df.soil$v == soil.var.labs[i]),c("mean","X5","X95")],1))
@@ -51,20 +58,27 @@ cbind(df.soil[which(df.soil$v == soil.var.labs[i]),c("v","t")],
 cbind(df.soil[which(df.soil$v == soil.var.labs[i]),c("v","t")],
       round(df.soil[which(df.soil$v == soil.var.labs[i]),c("mean","X5","X95")],3))
 
-# print stock and richness results for tables
-i = 31
+# C stock and richness means and 90% intervals
+i = 9
 print(cbind(df.stock[which(df.stock$var == stock.var.labels[i]),c("var","trt")],
             round(df.stock[which(df.stock$var == stock.var.labels[i]),c("mean","X5","X95")],1)))
 print(cbind(df.stock[which(df.stock$var == stock.var.labels[i]),c("var","trt")],
             round(df.stock[which(df.stock$var == stock.var.labels[i]),c("mean","X5","X95")],2)))
 
+which(stock.var.labels == "Live trees (\u2265 2.5 cm)")
+df.plot = df.stock[df.stock$var %in% c("Live trees (\u2265 2.5 cm)","Total live vegetation"),]
+ggplot(df.plot, aes(y=trt, x=mean, color=var)) + 
+                geom_point(position=position_dodge(0.5)) +
+                geom_errorbarh(aes(y=trt, , color=var,
+                                   xmin=`X5`,xmax=`X95`),
+                               position=position_dodge(0.5),
+                               height=0.2)
+
 ################################################################################
-# make combined plot for carbon concentrations and stocks
+# Step 3: make combined plot for carbon concentrations and stocks
 
 # IPCC estimates
-SOC.est.df = data.frame(matrix(nrow=3,ncol=2))
-SOC.est.df$`IPCC SOC` = c("Natural wetland","Revegetated cropland","Annual crops")
-SOC.est.df$value = c(88.0, 77.2, 55.9)
+ipcc.df = read.csv("IPCC_Carbon_Estimates.csv")
 
 # stacked plot for carbon fractions
 c.labs = c("TIC (%)","POC (%)","MAOC (%)")
@@ -95,8 +109,6 @@ p.c.concentrations = ggplot(df.stack.c[which(df.stack.c$v %in% c.labs),],
                                        label.r=unit(0,"pt"),label.size=0,
                                        size=8,fontface="bold") + 
                             guides(fill="none")
-p.c.concentrations
-
 stack.vars4 = c("TIC","POC","MAOC")
 ipcc.vars4 = c("Annual crops","Revegetated cropland","Natural wetland")
 p.c.stocks = ggplot(df.stock[which(df.stock$var %in% stack.vars4),], 
@@ -104,34 +116,35 @@ p.c.stocks = ggplot(df.stock[which(df.stock$var %in% stack.vars4),],
                         x=mean, fill=factor(var, levels=stack.vars4))) +
                     geom_bar(stat="identity",position="stack") + 
                     scale_fill_manual(values=s.palette) +
-                    labs(fill="",y="",x="Stock (Mg/ha)",title="") +
-                    geom_vline(data=SOC.est.df, 
-                               aes(xintercept=value, 
-                                   color=factor(`IPCC SOC`,levels=ipcc.vars4),
-                                   linetype=factor(`IPCC SOC`,levels=ipcc.vars4)), 
-                               linewidth=1) +
-                    scale_color_manual(values=c("red","magenta2","blue")) + 
-                    scale_linetype_manual(values=c("solid","dotted","dashed")) +
+                    labs(fill="",y="",x="Stock (Mg C/ha)",title="") +
+                    geom_vline(data=ipcc.df, 
+                               aes(xintercept=soc.value, 
+                                   color=factor(soc.type,levels=ipcc.vars4),
+                                   linetype=factor(soc.type,levels=ipcc.vars4)), 
+                               linewidth=1.5) +
+                    scale_color_manual(values=c("red","yellow1","royalblue1")) + 
+                    scale_linetype_manual(values=c("solid","dotdash","dashed")) +
                     guides(color=guide_legend(title="IPCC soil organic carbon"),
                            linetype=guide_legend(title="IPCC soil organic carbon")) +
                     theme(text=element_text(size=14), 
                           axis.text.y=element_blank(),
                           legend.key.size=unit(0.7,'cm'),
-                          plot.margin=unit(c(1,1,1,1),"lines")) +
+                          plot.margin=unit(c(1,1,1,1),"lines"),
+                          legend.key=element_rect(fill="darkgrey")) +
                     coord_cartesian(xlim=c(0,130), clip="off") +
                     scale_x_continuous(breaks=c(0,30,60,90,120))+
                     geom_label(x=145.5,y=6.3,label="b",
                                color="black",fill=alpha("white",0.9),
                                label.r=unit(0,"pt"),label.size=0,
                                size=8,fontface="bold")
-p.c.stocks
 p.c.all = p.c.concentrations + p.c.stocks
-p.c.all
+p.c.all =  p.c.all + theme(plot.margin = margin(0, 0, 0, 0, "cm"))
 ggsave("Figures/Figure3_Soil_Carbon_Concentrations_and_Stocks.jpeg", 
        plot=p.c.all, width=30, height=12, units="cm",dpi=600)
 
 ################################################################################
-## make combined plot for CEC, carbon fractions, texture, and aggregates
+# Step 4: make combined plot for CEC, carbon fractions, texture, and aggregates
+# (figure not used in paper)
 
 # stacked plot for aggregate size distribution
 t.size = 14
@@ -240,7 +253,7 @@ p.meq = ggplot(df.stack.meq, aes(x=mean,
                           label.r=unit(0,"pt"),label.size=0,
                           size=8,fontface="bold")
 
-p.upper = p.c + p.meq + plot_spacer() + plot_layout(widths=c(0.5,0.5,0))
+p.upper = p.c.concentrations + p.meq + plot_spacer() + plot_layout(widths=c(0.5,0.5,0))
 p.lower = p.text + p.ag + plot_spacer() + plot_layout(widths=c(0.5,0.5,0))
 p.all =  p.upper/p.lower + 
          plot_layout(guides = "collect") + 
@@ -249,9 +262,7 @@ p.all =  p.upper/p.lower +
 p.all
 
 ################################################################################
-# plot non-carbon chemical and physical variables
-library(ggtext)
-library(scales)
+# Step 5: plot non-carbon chemical and physical variables
 
 # plot all variables
 ggplot(df.soil, aes(y=factor(t, levels=trt.names), 
@@ -292,22 +303,52 @@ ggsave("Figures/Figure4_All_Except_CEC_MWD.jpeg",
        plot=p.chem.phys,width=27,height=18,units="cm",dpi=600)
 
 ################################################################################
-## make combined plot for C stocks in biomass, debris, and soil + vegetation
+# Step 6: make combined plot for C stocks in biomass, debris, and soil + vegetation,
+# along with species richness
 
-ABC.est.df = data.frame(matrix(nrow=2,ncol=0))
-ABC.est.df$`IPCC woody biomass` = c("Restored temperate forest","Mature temperate forest")
-ABC.est.df$value = c(46.1, 62.4)
-
-dead.est.df = data.frame(matrix(nrow=2,ncol=0))
-dead.est.df$`IPCC dead wood and litter` = c("Restored temperate forest","Mature temperate forest")
-dead.est.df$value = c(14.2, 29.7)
-
-TC.est.df = data.frame(matrix(nrow=2,ncol=0))
-TC.est.df$`IPCC total organic C` = c("Restored forested wetland","Mature forested wetland")
-TC.est.df$value = c(132.5, 180.1)
-
+# define color palletes
 v.palette <- brewer.pal(11,"RdYlGn")[c(7,9,11)]
 d.palette <- brewer.pal(9,"YlOrBr")[seq(3,8)]
+r.palette <- tail(brewer.pal(8,"BuPu"),3)
+
+# update ipcc.df
+ipcc.df = ipcc.df[1:2,]
+
+#  live vegetation plot
+stack.vars.l = c("Herbaceous biomass","Live stems (< 2.5 cm)","Live trees (\u2265 2.5 cm)")
+ipcc.vars.l = c("Restored temperate forest","Mature temperate forest")
+p.l = ggplot(df.stock[which(df.stock$var %in% stack.vars.l),], 
+             aes(y=factor(trt, levels=trt.names), x=mean, 
+                 fill=factor(var, levels=stack.vars.l))) +
+  geom_bar(stat="identity",position="stack") + 
+  labs(fill="",y="",
+       x="Posterior mean stock (Mg C/ha)",title="") + 
+  geom_vline(data=ipcc.df,
+             aes(xintercept=abg.value, 
+                 color=factor(abg.type,
+                              levels=ipcc.vars.l),
+                 linetype=factor(abg.type,
+                                 levels=ipcc.vars.l)), 
+             linewidth=1.5) +
+  scale_fill_manual(values=c("olivedrab3","olivedrab4",v.palette[3])) +
+  scale_color_manual(values=c("red","royalblue1")) +
+  scale_linetype_manual(values=c("solid","dashed")) + 
+  guides(fill=guide_legend(order=1),
+         color=guide_legend(title="IPCC aboveground\nwoody biomass",order=2),
+         linetype=guide_legend(title="IPCC aboveground\nwoody biomass",order=2)) +
+  theme(text=element_text(size=14), 
+        legend.key.size=unit(0.7,'cm'),
+        legend.background=element_rect(fill="transparent", color=NA),
+        plot.margin=unit(c(0,0,1,0),"lines"),
+        plot.background=element_rect(color="black",linewidth=1),
+        legend.key=element_rect(fill="darkgrey")) +
+  coord_cartesian(xlim=c(0,150),clip="off") +
+  geom_label(x=267.2,y=6.6,label="a",
+             color="black",fill=alpha("white",0.9),
+             label.r=unit(0,"pt"),label.size=0,
+             size=10,fontface="bold")
+p.l
+
 # debris plot
 stack.vars.d = c("Herbaceous litter","Fine woody debris (< 2.5 cm)",
                 "Fine woody debris (2.5-7.5 cm)","Coarse woody debris (\u2265 7.6 cm)",
@@ -318,65 +359,32 @@ p.d = ggplot(df.stock[which(df.stock$var %in% stack.vars.d),],
                  fill=factor(var, levels=stack.vars.d))) +
              geom_bar(stat="identity",position="stack") + 
              labs(fill="",y="",
-                  x="Posterior mean stock (Mg/ha)",title="") + 
-             geom_vline(data=dead.est.df, 
-                        aes(xintercept=value,
-                            color=factor(`IPCC dead wood and litter`,
+                  x="Posterior mean stock (Mg C/ha)",title="") + 
+             geom_vline(data=ipcc.df, 
+                        aes(xintercept=debris.value,
+                            color=factor(debris.type,
                                          levels=ipcc.vars.d),
-                            linetype=factor(`IPCC dead wood and litter`,
+                            linetype=factor(debris.type,
                                             levels=ipcc.vars.d)), 
-                        linewidth=1) +
-             scale_color_manual(values=c("red","blue")) +
+                        linewidth=1.5) +
+             scale_color_manual(values=c("red","royalblue1")) +
              scale_linetype_manual(values=c("solid","dashed")) + 
              scale_fill_manual(values=d.palette) + 
              guides(fill=guide_legend(order=1),
-                    color=guide_legend(title="IPCC dead wood and litter",order=2),
-                    linetype=guide_legend(title="IPCC dead wood and litter",order=2)) +
+                    color=guide_legend(title="IPCC dead wood & litter",order=2),
+                    linetype=guide_legend(title="IPCC dead wood & litter",order=2)) +
              theme(text=element_text(size=14), 
                    legend.key.size=unit(0.7,'cm'),
                    legend.background=element_rect(fill="transparent", color=NA),
                    plot.margin=unit(c(0,0,1,0),"lines"),
-                   plot.background=element_rect(color="black",linewidth=1)) +
+                   plot.background=element_rect(color="black",linewidth=1),
+                   legend.key=element_rect(fill="darkgrey")) +
              coord_cartesian(xlim = c(0,30.5), clip="off") +
-             geom_label(x=58.1,y=6.6,label="b",
+             geom_label(x=57.9,y=6.6,label="b",
                         color="black",fill=alpha("white",0.9),
                         label.r=unit(0,"pt"),label.size=0,
                         size=10,fontface="bold")
 p.d
-
-#  live vegetation plot
-stack.vars.l = c("Herbaceous biomass","Live stems (< 2.5 cm)","Live trees (\u2265 2.5 cm)")
-ipcc.vars.l = c("Restored temperate forest","Mature temperate forest")
-p.l = ggplot(df.stock[which(df.stock$var %in% stack.vars.l),], 
-             aes(y=factor(trt, levels=trt.names), x=mean, 
-                 fill=factor(var, levels=stack.vars.l))) +
-             geom_bar(stat="identity",position="stack") + 
-             labs(fill="",y="",
-                  x="Posterior mean stock (Mg/ha)",title="") + 
-             geom_vline(data=ABC.est.df,
-                        aes(xintercept=value, 
-                            color=factor(`IPCC woody biomass`,
-                                         levels=ipcc.vars.l),
-                            linetype=factor(`IPCC woody biomass`,
-                                            levels=ipcc.vars.l)), 
-                        linewidth=1) +
-             scale_fill_manual(values=c("olivedrab3","olivedrab4",v.palette[3])) +
-             scale_color_manual(values=c("red","blue")) +
-             scale_linetype_manual(values=c("solid","dashed")) + 
-             guides(fill=guide_legend(order=1),
-                    color=guide_legend(title="IPCC woody biomass",order=2),
-                    linetype=guide_legend(title="IPCC woody biomass",order=2)) +
-             theme(text=element_text(size=14), 
-                   legend.key.size=unit(0.7,'cm'),
-                   legend.background=element_rect(fill="transparent", color=NA),
-                   plot.margin=unit(c(0,0,1,0),"lines"),
-                   plot.background=element_rect(color="black",linewidth=1)) +
-                   coord_cartesian(xlim=c(0,150),clip="off") +
-                   geom_label(x=268.1,y=6.6,label="a",
-                              color="black",fill=alpha("white",0.9),
-                              label.r=unit(0,"pt"),label.size=0,
-                              size=10,fontface="bold")
-p.l
 
 # total ecosystem
 stack.vars.e = c("TIC","SOC","Total dead vegetation","Total live vegetation")
@@ -386,28 +394,31 @@ p.e = ggplot(df.stock[which(df.stock$var %in% stack.vars.e),],
                  fill=factor(var, levels=stack.vars.e))) +
             geom_bar(stat="identity",position="stack") + 
             labs(fill="",y="",
-                 x="Posterior mean stock (Mg/ha)",title="") +
-            geom_vline(data=TC.est.df, 
-                       aes(xintercept=value, 
-                           color=factor(`IPCC total organic C`,
+                 x="Posterior mean stock (Mg C/ha)",title="") +
+            geom_vline(data=ipcc.df, 
+                       aes(xintercept=total.value, 
+                           color=factor(total.type,
                                         levels=ipcc.vars.e),
-                           linetype=factor(`IPCC total organic C`,
+                           linetype=factor(total.type,
                                            levels=ipcc.vars.e)), 
-                       linewidth=1) +
-            scale_fill_manual(values=c(brewer.pal(9,"Greys")[5],s.palette[3],d.palette[4],v.palette[3]),
+                       linewidth=1.5) +
+            scale_fill_manual(values=c(brewer.pal(9,"Greys")[5],
+                                       s.palette[3],d.palette[4],
+                                       v.palette[3]),
                               labels=c("TIC","SOC",
                                        "Litter and woody debris",
                                        "Living biomass")) +
-            scale_color_manual(values=c("red","blue")) +
+            scale_color_manual(values=c("red","royalblue1")) +
             scale_linetype_manual(values=c("solid","dashed")) +
             guides(fill=guide_legend(order=1),
-                   color=guide_legend(title="IPCC total organic C",order=2),
-                   linetype=guide_legend(title="IPCC total organic C",order=2)) +
+                   color=guide_legend(title="IPCC total organic C\n[aboveground &\nsoil (0-30 cm)]",order=2),
+                   linetype=guide_legend(title="IPCC total organic C\n[aboveground &\nsoil (0-30 cm)]",order=2)) +
             theme(text=element_text(size=14), 
                   legend.key.size=unit(0.7,'cm'),
                   legend.background=element_rect(fill="transparent", color=NA),
                   plot.margin=unit(c(0,0,1,0),"lines"),
-                  plot.background=element_rect(color="black",linewidth=1)) +
+                  plot.background=element_rect(color="black",linewidth=1),
+                  legend.key=element_rect(fill="darkgrey")) +
             coord_cartesian(xlim = c(0,260), clip="off") +
             geom_label(x=464,y=6.6,label="c",
                        color="black",fill=alpha("white",0.9),
@@ -416,7 +427,6 @@ p.e = ggplot(df.stock[which(df.stock$var %in% stack.vars.e),],
 p.e
 
 # richness plot
-r.palette <- tail(brewer.pal(8,"BuPu"),3)
 stack.vars.r = c("Total richness","Herbaceous species","Tree species")
 df.sp = df.stock[which(df.stock$var %in% stack.vars.r),]
 p.r = ggplot(data=df.sp) + 
@@ -428,21 +438,22 @@ p.r = ggplot(data=df.sp) +
              labs(fill="",y="",x="Posterior mean richness",title="") + 
              scale_fill_manual(values=r.palette) +
              theme(text = element_text(size=14),
-                   legend.key.size=unit(0.7,'cm'),
-                   legend.background=element_rect(fill="transparent", color=NA),
+                   legend.key.size = unit(0.7,'cm'),
+                   legend.background = element_rect(fill="transparent", color=NA),
                    plot.margin=unit(c(0,0,1,0),"lines"),
-                   plot.background=element_rect(color="black",linewidth=1)) +
+                   plot.background=element_rect(color="black",linewidth=1),
+                   legend.key=element_rect(fill="darkgrey")) +
              coord_cartesian(xlim=c(0,21),clip="off") +
              geom_label(x=39.9,y=6.6,label="d",
                         color="black",fill=alpha("white",0.9),
                         label.r=unit(0,"pt"),label.size=0,
                         size=10,fontface="bold")
-p.r
 
-p.c.stocks = (p.l+theme(plot.margin=unit(c(0,2,0,0),"pt"))+p.d)/(p.e+theme(plot.margin=unit(c(0,1.1,0,0),"pt"))+p.r)
-p.c.stocks
+# combine all plots
+p.c.stocks = (p.l+theme(plot.margin=unit(c(0,1,0,0),"pt"))+p.d)/(p.e+theme(plot.margin=unit(c(0,1,0,0),"pt"))+p.r)
+p.c.save = p.c.stocks + theme(plot.margin = margin(0, 0, 0, 0, "cm"))
 
 ggsave("Figures/Figure6_Veg_Ecosystem_Cstocks_Richness.jpeg", 
-       plot=p.c.stocks, width=40, height=23, units="cm", dpi=600)
+       plot=p.c.save, width=40, height=23, units="cm", dpi=1000)
 
 

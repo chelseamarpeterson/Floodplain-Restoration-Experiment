@@ -113,4 +113,25 @@ p3 = ggplot() +
                      linetype=`Social Cost of Carbon Estimate`))
 p1 + p2 + p3
 
-                     
+# print results for table 
+cols = colnames(ecoC.n.df.join1[3:7])
+for (i in 1:length(cols)) {
+  mean.df = ecoC.n.df.join1[which(ecoC.n.df.join1$stat == "mean"),c("trt",cols[i])]
+  l.df = ecoC.n.df.join1[which(ecoC.n.df.join1$stat == "lower"),c("trt",cols[i])]
+  u.df = ecoC.n.df.join1[which(ecoC.n.df.join1$stat == "upper"),c("trt",cols[i])]
+  print(cols[i])
+  for (j in 1:6) {
+    trt = mean.df$trt[j]
+    if (cols[i] %in% c("richness","stock")) {
+      print(paste(trt, ": ", 
+                  round(mean.df[j,cols[i]],2), " (", 
+                  round(l.df[j,cols[i]],1), "-", 
+                  round(u.df[j,cols[i]],1), ")", sep=""))      
+    } else {
+      print(paste(trt, ": ", 
+                  round(mean.df[j,cols[i]]), " (", 
+                  round(l.df[j,cols[i]]), "-", 
+                  round(u.df[j,cols[i]]), ")", sep=""))           
+    }
+  }
+}
