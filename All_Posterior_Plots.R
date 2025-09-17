@@ -428,13 +428,20 @@ p.e
 
 # richness plot
 stack.vars.r = c("Total richness","Herbaceous species","Tree species")
+stack.vars.new = c("Herbaceous layer only","Tree layer only","Tree and herbaceous layer")
 df.sp = df.stock[which(df.stock$var %in% stack.vars.r),]
-p.r = ggplot(data=df.sp) + 
+df.sp.wide = pivot_wider(df.sp, id_cols=trt, names_from=var, values_from=mean)
+df.sp.wide$`Tree and herbaceous layer` = df.sp.wide$`Tree species` + df.sp.wide$`Herbaceous species` - df.sp.wide$`Total richness`
+df.sp.new = df.sp.wide[,-which(colnames(df.sp.wide) == "Total richness")]
+colnames(df.sp.new) = c("trt",stack.vars.new)
+df.sp.melt = melt(df.sp.new, id.vars=c("trt"))
+p.r = ggplot(data=df.sp.melt) + 
              geom_bar(aes(y=factor(trt, levels=trt.names), 
-                          x=mean, 
-                          fill=factor(var, levels=stack.vars.r)),
+                          x=value, 
+                          fill=factor(variable, 
+                                      levels=rev(stack.vars.new))),
                           stat="identity",
-                          position=position_dodge(width=0.9)) +
+                          position="stack") +
              labs(fill="",y="",x="Posterior mean richness",title="") + 
              scale_fill_manual(values=r.palette) +
              theme(text = element_text(size=14),
@@ -448,6 +455,7 @@ p.r = ggplot(data=df.sp) +
                         color="black",fill=alpha("white",0.9),
                         label.r=unit(0,"pt"),label.size=0,
                         size=10,fontface="bold")
+p.r
 
 # combine all plots
 p.c.stocks = (p.l+theme(plot.margin=unit(c(0,1,0,0),"pt"))+p.d)/(p.e+theme(plot.margin=unit(c(0,1,0,0),"pt"))+p.r)

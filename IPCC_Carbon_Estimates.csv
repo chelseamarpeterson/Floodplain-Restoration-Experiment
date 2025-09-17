@@ -1,4 +1,4 @@
-soc.type,soc.value,abg.type,abg.value,debris.type,debris.value,total.type,total.value
-Natural wetland,88,Mature temperate forest,62.4,Mature temperate forest,29.7,Mature forested wetland,180.1
-Revegetated cropland,77.2,Restored temperate forest,46.1,Restored temperate forest,14.2,Restored forested wetland,132.5
-Annual crops,55.9,,,,,,
+soc.type,soc.value,abg.type,abg.value,bg.type,bg.value,debris.type,debris.value,total.type,total.type
+Natural wetland,88,Mature temperate forest,62.4,Mature temperate forest,14.4,Mature temperate forest,29.6,Mature forested wetland,194.3
+Revegetated cropland,77.2,Restored temperate forest,48,Restored temperate forest,11,Restored temperate forest,14.8,Restored forested wetland,146
+Annual crops,55.9,,,,,,,,
