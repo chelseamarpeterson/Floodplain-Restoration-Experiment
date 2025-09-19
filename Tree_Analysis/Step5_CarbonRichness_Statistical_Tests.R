@@ -21,7 +21,7 @@ n.trt = length(trts)
 veg.soil.df = read.csv("Tree_Analysis/Clean_Data/Clean_Veg_Soil_Cstocks_Richness.csv")
 
 # variable names
-vars = colnames(veg.soil.df)[4:38]
+vars = colnames(veg.soil.df)[4:40]
 n.v = length(vars)
 
 # convert treatments into indices
@@ -39,7 +39,7 @@ for (i in 1:n.v) {
 }
 
 # fit simple models
-set.seed(12)
+set.seed
 m.all = list()
 for (i in 1:n.v) {
   v = vars[i]
@@ -58,17 +58,18 @@ for (i in 1:n.v) { trankplot(m.all[[vars[i]]]) }
 # variable in new order with labels
 var.labels = c("Fine woody debris (2.5-7.5 cm)","Coarse woody debris (\u2265 7.6 cm)",
                "Standing dead trees (\u2265 2.5 cm)","Live F. pennsylvanica (\u2265 2.5 cm)",
-               "Standing dead F. pennsylvanica (\u2265 2.5 cm)","Diff. F. pennsylvanica (Live-Dead)",
-               "Dead stems (< 2.5 cm)","Live stems (< 2.5 cm)","Live trees (\u2265 2.5 cm)",
-               "Herbaceous biomass","Mixed biomass","P. arundinacea biomass",
-               "H. japonicus biomass","Herbaceous litter","Fine woody debris",
-               "Fine woody debris C:N ratio","Herbaceous litter C:N ratio","Herbaceous biomass C:N ratio",
-               "MAOC","POC","SOC","TIC","TC",
-               "Herbaceous species","Tree species","Total richness",
+               "Standing dead F. pennsylvanica (\u2265 2.5 cm)","Dead stems (< 2.5 cm)",
+               "Aboveground live stems (< 2.5 cm)","Belowground live stems (< 2.5 cm)",,"Live stems (< 2.5 cm)",
+               "Aboveground live trees (\u2265 2.5 cm)","Belowground live trees (\u2265 2.5 cm)","Live trees (\u2265 2.5 cm)",
+               "Herbaceous biomass","Mixed biomass","P. arundinacea biomass","H. japonicus biomass",
+               "Herbaceous litter","Fine woody debris","Fine woody debris C:N ratio","Herbaceous litter C:N ratio",
+               "Herbaceous biomass C:N ratio","MAOC","POC","SOC","TIC","TC",
+               "Total aboveground trees","Total belowground trees",
                "Total live vegetation","Total dead vegetation","Total vegetation","Total ecosystem",
                "Live trees w/ F. pennsylvanica","Standing dead trees w/o F. pennsylvanica",
                "Total live w/ F. pennsylvanica","Total dead w/o F. pennsylvanica",
-               "Total vegetation w/o F. pennsylvanica death","Total ecosystem w/o F. pennsylvanica death")
+               "Total vegetation w/o F. pennsylvanica death","Total dead w/o F. pennsylvanica death",
+               "Herbaceous species","Tree species","Total richness")
 length(vars)
 length(var.labels)
 

@@ -1,12 +1,11 @@
-path_to_tree_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Tree_Analysis"
+path_to_tree_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Chapter2/Floodplain-Experiment-Repo/Tree_Analysis"
 setwd(path_to_tree_folder)
 
 library(allodb)
-library(ggplot2)
-library(patchwork)
 library(dplyr)
-library(ggfortify)
+library(tidyr)
 library(reshape2)
+library(ggplot2)
 
 # conversions
 m2_per_ha = 10^4
@@ -14,19 +13,19 @@ kg_per_Mg = 10^3
 
 # constants
 tree.C.content = 0.48 # %
-bg.ab.ratio = 0.20 
 
-# plot dimensions (m)
-plot.length.2022 = 48 
-plot.width.2022 = 12 
-plot.length.2013 = 50
-plot.width.2013 = 5 
+# plot dimensions 
+plot.length = 48 #m 
+plot.width = 12 #m 
+plot.area.m2 = plot.length*plot.width #m2
+plot.area.ha = plot.area/m2_per_ha #ha
 
-### estimate above- and belowground biomass from diameter-at-breast height (DBH) data (cm) --- 
+################################################################################
+# step 1: estimate above- and belowground biomass from diameter-at-breast height (DBH) data (cm) 
 
 # define data-related variables
 trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
-years = c(2013, 2022, 2023)
+years = c(2022, 2023)
 n.y = length(years)
 
 # list of genus families
@@ -69,30 +68,26 @@ dbh.all$ab3 = get_biomass(dbh = dbh.all$dbh,
                           genus = dbh.all$genus, 
                           species = dbh.all$species, 
                           coords = c(-90.1835, 41.5542))/kg_per_Mg # [kg -> Mg]
-dbh.all$bg3 = bg.ab.ratio * dbh.all$ab3
+dbh.all$bg3 = dbh.all$ab3 * dbh.all$r2
+mean(dbh.all$r2)
 
 # check for NAs
 sum(is.na(dbh.all[,c("ab1","ab2","r1","r2","bg1","bg2","ab3","bg3")]))
 
-### estimate carbon stocks from biomass (cm) ----
-
 # sum above & belowground biomass by species within each plot
 biomass.by.species = dbh.all %>% 
-                     group_by(redo, year, plot, trt, trt.full, num, spp, genus, species) %>% 
-                     summarise(ab1=sum(ab1), ab2=sum(ab2), ab3=sum(ab3), 
-                               bg1=sum(bg1), bg2=sum(bg2), bg3=sum(bg3))
+  group_by(redo, year, plot, trt, trt.full, num, spp, genus, species) %>% 
+  summarise(ab1=sum(ab1), ab2=sum(ab2), ab3=sum(ab3), 
+            bg1=sum(bg1), bg2=sum(bg2), bg3=sum(bg3))
 
 # divide biomass by total plot area (Mg/ha)
-areas = c(plot.width.2013*plot.length.2013, 
-          plot.width.2022*plot.length.2022, 
-          plot.width.2022*plot.length.2022)/m2_per_ha # 10^4 m2 = ha
 bm.vars = c("ab1","ab2","ab3","bg1","bg2","bg3")
 bm.vars.ha = c("ab_ha1","ab_ha2","ab_ha3","bg_ha1","bg_ha2","bg_ha3")
-for (i in 1:n.y) {
-  year.ind = which(biomass.by.species$year == years[i])
-  biomass.by.species[year.ind, bm.vars] = biomass.by.species[year.ind, bm.vars]/areas[i]
-}
+biomass.by.species[, bm.vars] = biomass.by.species[, bm.vars]/plot.area.ha
 colnames(biomass.by.species)[which(colnames(biomass.by.species) %in% bm.vars)] = bm.vars.ha
+
+################################################################################
+# step 2: estimate carbon stocks from biomass (Mg C/ha)
 
 ## estimate C density by species
 
@@ -149,7 +144,8 @@ C.stocks.by.plot = C.stocks.by.plot %>%
                                 bmC_ha2 = abC_ha2 + bgC_ha2,
                                 bmC_ha3 = abC_ha3 + bgC_ha3)
 
-### compare dbh and C stock results for all redo v. original ----
+################################################################################
+# step 3: compare dbh and C stock results for all redo v. original
 
 ## make dataframe to compare C stock estimates before and after resampling
 
@@ -180,7 +176,8 @@ ggplot(df.plot.comp, aes(x=factor(trt.full, levels=trt.names), y=bmC_ha3, fill=w
        geom_boxplot() +
        labs(x="", y="Woody Biomass C storage (Mg/ha)")
 
-## replace 2022 data with 2023 redo data ----
+################################################################################
+# step 4: replace 2022 data with 2023 redo data
 
 # for C stocks by plot 
 C.stocks.by.plot.redo = C.stocks.by.plot[-orig.ind,]
@@ -202,126 +199,3 @@ C.stocks.by.species.redo = C.stocks.by.species.redo %>%
 # write C stocks results to file
 write.csv(C.stocks.by.plot.redo, "Clean_Data/WoodyBiomass_C_Stocks_By_Plot.csv", row.names=F)
 write.csv(C.stocks.by.species.redo, "Clean_Data/WoodyBiomass_C_Stocks_By_Species.csv", row.names=F)
-
-################################################################################
-### compare results across allometric equations (not checked)
-
-# replace redo plot biomass data
-biomass.redo.ind = which(biomass.by.plot$redo == "N" & (biomass.by.plot$year == "2022" & biomass.by.plot$plot %in% redo.plots))
-biomass.by.plot.redo = biomass.by.plot[-biomass.redo.ind,]
-
-# aboveground biomass
-trt.method.abg = biomass.by.plot.redo[,which(colnames(biomass.by.plot.redo) %in% c("year","trt","trt.full","ab_ha1","ab_ha2","ab_ha3"))]
-trt.method.abg.melt = melt(trt.method.abg, 
-                           id.vars = c("year","trt","trt.full"), 
-                           variable.name = "method", value.name="ab_ha")
-
-names = c("Jenkins (2003)","Chojnacky (2014)","allodb (2022)")
-ggplot(trt.method.abg.melt, aes(x=factor(trt.full,level=trt.names), y=ab_ha, fill=factor(method))) +
-       geom_boxplot() + 
-       scale_fill_discrete(labels = names) +
-       labs(x="Treatment", y="Aboveground biomass (Mg/ha)") +
-       theme(legend.title = element_blank(), legend.text = element_text(size=14), 
-             axis.title = element_text(size=16), axis.text = element_text(size=12))
-
-trt.method.abg.melt$log_ab_ha = log(trt.method.abg.melt$ab_ha + 1)
-aov.method.log.abg = aov(log_ab_ha ~ method*trt*year, data=trt.method.abg.melt)
-summary(aov.method.log.abg)
-plot(aov.method.log.abg)
-hist(residuals(aov.method.log.abg))
-
-aov.method.abg = aov(ab_ha ~ method*trt*year, data=trt.method.abg.melt)
-summary(aov.method.abg)
-plot(aov.method.abg)
-hist(residuals(aov.method.abg))
-
-# belowground biomass
-trt.method.bg = biomass.by.plot[,which(colnames(biomass.by.plot) %in% c("year","trt","trt.full","bg_ha1","bg_ha2","bg_ha3"))]
-trt.method.bg.melt = melt(trt.method.bg, id.vars = c("year","trt","trt.full"), 
-                     variable.name = "method", value.name="bg_ha")
-
-ggplot(trt.method.bg.melt, aes(x=factor(trt.full,level=trt.names), y=bg_ha, fill=factor(method))) +
-        geom_boxplot() + theme(legend.title = element_blank()) +
-        ylab("Belowground Biomass (Mg/ha)") + xlab("Treatment") + 
-        scale_fill_discrete(labels = names) 
-
-trt.method.bg.melt$log_bg_ha = log(trt.method.bg.melt$bg_ha + 1)
-aov.method.log.bg = aov(log_bg_ha~method*year*trt, data=trt.method.bg.melt)
-summary(aov.method.log.bg)
-plot(aov.method.log.bg)
-
-################################################################################
-## PCA on biomass carbon stocks by species (not checked)
-
-uni.spp = unique(C.stocks.by.species.redo$spp)
-n.sp = length(uni.spp)
-  
-# make df
-colors = c("coral1","darkgoldenrod","chartreuse3","cornflowerblue","darkorchid1","burlywood4")
-years = c(2013, 2022)
-n.yrs = 2
-df.c = data.frame(matrix(nrow = n.trt * n.plot * n.yrs, ncol = n.sp + 5))
-colnames(df.c) = c("year","trt","trt.full","num","color", uni.spp)
-k = 1
-for (y in years) {
-  for (i in 1:n.trt) {
-    t = trts[i]
-    n = trt.names[i]
-    c = colors[i]
-    for (j in 1:n.plot) {
-      df.c[k, c("year","trt","trt.full","num","color")] = c(y, t, n, j, c)
-      p.ind = which((C.stocks.by.species.redo$year == y & C.stocks.by.species.redo$trt == t) & C.stocks.by.species.redo$num == j)
-      p.uni.sp = unique(C.stocks.by.species.redo$spp[p.ind])
-      col.ind = which(colnames(df.c) %in% p.uni.sp)
-      if (length(p.ind) > 0) {
-        df.c[k, col.ind] = C.stocks.by.species.redo[p.ind, "bmC_ha3"]
-        df.c[k, which(is.na(df.c[k,]))] = 0
-      } else {
-        df.c[k, uni.spp] = 0
-      }
-      k = k + 1
-    }
-  }
-}
-            
-## run PCA
-pca.C = prcomp(df.c[,-seq(1,5)], center=T, scale=T)
-summary(pca.C)
-
-# numerical PCA results
-pca.C$rotation[,1:3]
-pcs = data.frame(as.matrix(df.c[,-seq(1,5)]) %*% as.matrix(pca.C$rotation))
-pcs$trt = df.c$trt
-df.c$year = factor(df.c$year)
-
-## auto plot
-df.c$trt.full = factor(df.c$trt.full, levels=trt.names)
-autoplot(pca.C, data=df.c, loadings=T, loadings.label=T, frame=T, 
-         col="trt.full", shape="year", x=1, y=3)
-
-## plot with better labels
-CAloadings <- data.frame(Variables = rownames(pca.C$rotation), pca.C$rotation)
-
-# add PCA scores to the dataset
-df.c[, c('PC1', 'PC2')] = pca.C$x[, 1:2]
-
-# save variable loadings in a separate dataset
-rot = as.data.frame(pca.C$rotation[, 1:2])
-rot$var = rownames(pca.C$rotation)
-
-# rescale the loadings to fit nicely within the scatterplot of our data
-mult = max(abs(df.c[, c('PC1', 'PC2')])) / max(abs(rot[, 1:2])) / 2
-rot[, 1:2] = rot[, 1:2] * mult
-
-# if there are many variables to plot, you can play with ggrepel 
-library(ggrepel)  
-library(ggalt)
-library(plyr)
-
-ggplot(data = rot, aes(x=0, y=0, xend = PC1, yend = PC2, label = var)) +
-        geom_point(data = df.c, aes(x=PC1, y=PC2, color=factor(trt.full, levels=trt.names), shape=year), inherit.aes = FALSE, size=3) +
-        geom_segment(color = 'red', arrow = arrow(length = unit(0.03, "npc"))) +
-        geom_label_repel(aes(PC1 * 1, PC2 * 1)) +
-        labs(x = "PC1 (13.0%)", y = "PC2 (11.5%)", color="") + 
-        theme(legend.title = element_blank(), legend.text = element_text(size=10), 
-              axis.title = element_text(size=14), axis.text = element_text(size=10))

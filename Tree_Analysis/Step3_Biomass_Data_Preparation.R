@@ -7,8 +7,8 @@ library(dplyr)
 library(patchwork)
 library(reshape2)
 
-### script that brings together all biomass carbon stock and plant species richness data
-### and writes the results to a CSV file
+################################################################################
+# script that brings together all biomass carbon stocks and writes the results to a CSV file
 
 # conversions
 ft_per_m = 3.28084
@@ -29,9 +29,12 @@ min.snag.height = 4.5 # ft
 med.stem.width = 1.25 # cm
 med.fwd.diam = 5 # cm
 
-# plot dimensions
-plot.length = 48 # m
-plot.width = 12 # m
+# plot dimensions 
+plot.length = 48 #m 
+plot.width = 12 #m 
+plot.area.m2 = plot.length*plot.width #m2
+plot.area.ha = plot.area/m2_per_ha #ha
+plot.length.ft = plot.length * ft_per_m #ft
 
 # treatment labels
 trts = c("A","B","C","D","E","R")
@@ -59,8 +62,8 @@ live.wood.c.df = live.wood.c.df[which(live.wood.c.df$position == "standing" & li
 live.wood.c.df = live.wood.c.df %>% separate(binomial.resolved, c("genus","spp"), sep="_", remove=F)
 live.wood.c.df$species = paste(live.wood.c.df$genus, live.wood.c.df$spp, sep= " ")
 
-### clean coarse and fine woody debris data ---- ###############################
-### double-checked #############################################################
+################################################################################
+# step: clean coarse and fine woody debris data
 
 # load dataframe and change columne names
 cwd.data = read.csv("Tree_Analysis/Raw_Data/CWD_June2023.csv")
@@ -80,7 +83,7 @@ trt.sort = sort(fwd.counts$trt, index.return=T)
 fwd.counts = fwd.counts[trt.sort$ix,]
 
 # estimate FWD volume (m^3/ha) and C storage (Mg/ha)
-fwd.counts$fwd.vol = (1/(plot.length*ft_per_m)) * (C1*(pi^2)/8) * fwd.counts$fwd.count * ((med.fwd.diam/cm_per_in)^2) #m3/ha
+fwd.counts$fwd.vol = (1/plot.length.ft) * (C1*(pi^2)/8) * fwd.counts$fwd.count * ((med.fwd.diam/cm_per_in)^2) #m3/ha
 fwd.counts$int.fwd.carbon = fwd.counts$fwd.vol * fwd.C.content * cwd.density.decay.class3 # m3/ha * g/cm3 * g/g = Mg/ha
 
 # make data frame for coarse woody debris (>7.5 cm)
@@ -116,7 +119,7 @@ for (i in 1:nrow(cwd.diams)) {
 }
 
 # estimate CWD volume (m^3/ha) and carbon storage (Mg/ha)
-cwd.diams$cwd.vol = (1/(plot.length*ft_per_m)) * (C1*(pi^2)/8) * (cwd.diams$diameter/cm_per_in)^2 #m3/ha
+cwd.diams$cwd.vol = (1/plot.length.ft) * (C1*(pi^2)/8) * (cwd.diams$diameter/cm_per_in)^2 #m3/ha
 cwd.diams$cwd.carbon = cwd.diams$cwd.vol * cwd.diams$taxon.c.content * cwd.density.decay.class3 # Mg/ha
 
 # sum carbon stocks (Mg/ha) by plot
@@ -179,8 +182,8 @@ cwd.sp.melt = melt(cwd.sp.wide,
 # write cleaned cwd data to csv
 write.csv(cwd.sp.melt, "Tree_Analysis/Clean_Data/CWD_Carbon_Stocks_By_Species.csv", row.names=F)
 
-### clean snag data ---- #######################################################
-### double-checked #############################################################
+################################################################################
+# step: clean snag data
 
 # load dataframe and change column names
 snag.dbh.data = read.table("Tree_Analysis/Raw_Data/DBH_Snags_June2023.csv", header=T, sep=",")
@@ -204,7 +207,7 @@ snag.diams = snag.diams %>% separate(species, c("genus","spp"), sep = " ", remov
 
 # calculate snag volume (m3/ha)
 snag.diams$dbh = as.numeric(snag.diams$dbh) # cm
-snag.diams$basal.area = (pi * (snag.diams$dbh/2)^2) / (plot.width * plot.length) #m2/ha
+snag.diams$basal.area = (pi * (snag.diams$dbh/2)^2) / plot.area.m2 #m2/ha = cm2/m2
 snag.diams$vol.min = snag.diams$basal.area * (min.snag.height / ft_per_m) #m3/ha
 
 # calculate snag C storage
@@ -256,7 +259,7 @@ snag.sum = snag.sum[trt.sort$ix,]
 snag.counts = snag.data[which(snag.data$dbh == "<2.5"),]
 snag.counts = snag.counts[,-which(colnames(snag.counts) %in% c("plot","redo","live","dbh","notes"))]
 colnames(snag.counts)[4] = "dead.stem.count"
-snag.counts$dead.stem.count = snag.counts$dead.stem.count / (plot.width * plot.length) * m2_per_ha # count/ha
+snag.counts$dead.stem.count = snag.counts$dead.stem.count / plot.area.ha # count/ha
 snag.counts$dead.stem.volmin = snag.counts$dead.stem.count * pi * ((med.stem.width/cm_per_m)^2) * (min.snag.height/ft_per_m) # m3/ha
 
 # calculate dead stem C storage
@@ -345,8 +348,8 @@ snag.melt = snag.melt[trt.sort$ix,]
 # write cleaned snag data to csv
 write.csv(snag.melt, "Tree_Analysis/Clean_Data/Snag_Carbon_Stocks_By_Species.csv", row.names=F)
 
-### clean live stem count data ---- ############################################
-### double-checked #############################################################
+################################################################################
+# step: clean live stem count data
 
 # read in 2022 dbh data
 dbh.data.2022 = read.csv('Tree_Analysis/Raw_Data/DBH_August2022.csv')
@@ -354,7 +357,7 @@ colnames(dbh.data.2022) = c("plot","spp","dbh","stem.count")
 stem.data.2022 = dbh.data.2022[which(dbh.data.2022$dbh == "<3"), c("plot","spp","stem.count")]
 
 # get full species names
-allo.df = read.csv("Tree_Analysis/Tree_Databases/Jenkins2004.csv")
+allo.df = read.csv("Tree_Analysis/Tree_Databases/Chojnacky2014.csv")
 stem.data.2022$species = rep(0, nrow(stem.data.2022))
 for (i in 1:nrow(stem.data.2022)) {
   spp.id = which(allo.df$spp == stem.data.2022$spp[i])
@@ -376,12 +379,17 @@ all.stem.data = rbind(stem.data.2022[,c("plot","trt","num","species","stem.count
 all.stem.data$species = trimws(all.stem.data$species)
 
 # used allodb to estimate aboveground biomass for each species
-all.stem.data = all.stem.data %>% separate(species, c("genus","spp"), sep=" ", remove=F)
-all.stem.data$agb = get_biomass(dbh = rep(med.stem.width, nrow(all.stem.data)),
-                                genus = all.stem.data$genus, 
-                                species = all.stem.data$spp, 
-                                coords = c(-90.1835, 41.5542)) * all.stem.data$stem.count / kg_per_Mg # [kg -> Mg]
-all.stem.data$agb.ha = all.stem.data$agb / (plot.width * plot.length) * m2_per_ha # Mg/ha
+colnames(all.stem.data)[4] = "spp"
+all.stem.data = all.stem.data %>% separate(spp, c("genus","species"), sep=" ", remove=F)
+all.stem.data$abg = get_biomass(dbh = rep(med.stem.width, nrow(all.stem.data)),
+                               genus = all.stem.data$genus, 
+                               species = all.stem.data$spp, 
+                               coords = c(-90.1835, 41.5542)) * all.stem.data$stem.count / kg_per_Mg # [kg -> Mg]
+all.stem.data$abg.ha = all.stem.data$abg / plot.area.ha # Mg/ha
+
+# get root ratios from Chojnacky and estimate belowground biomass
+all.stem.data$r = exp(allo.df[1,"cr.b0"] + allo.df[1,"cr.b1"]*log(med.stem.width)) # ratio = exp(b0 + b1*log(dbh [cm]))
+all.stem.data$bg.ha = all.stem.data$abg.ha * all.stem.data$r # Mg/ha
 
 # identify corresponding C density for each species
 all.stem.data$c.content = rep(0,nrow(all.stem.data))
@@ -399,7 +407,9 @@ for (i in 1:nrow(all.stem.data)) {
 }
 
 # estimate stem C content
-all.stem.data$live.stem.carbon = all.stem.data$agb.ha * all.stem.data$c.content # Mg/ha
+all.stem.data$abg.live.stem.carbon = all.stem.data$abg.ha * all.stem.data$c.content # Mg/ha
+all.stem.data$bg.live.stem.carbon = all.stem.data$bg.ha * all.stem.data$c.content # Mg/ha
+all.stem.data$tot.live.stem.carbon = all.stem.data$abg.live.stem.carbon + all.stem.data$bg.live.stem.carbon
 
 # add full treatment name
 all.stem.data$trt.full = rep(0, nrow(all.stem.data))
@@ -408,17 +418,19 @@ for (i in 1:6) { all.stem.data$trt.full[which(all.stem.data$trt == trts[i])] = t
 # sum data by plot
 live.stem.sum = all.stem.data %>% 
                 group_by(trt, trt.full, num) %>% 
-                summarize(live.stem.carbon = sum(live.stem.carbon))
+                summarize(abg.live.stem.carbon = sum(abg.live.stem.carbon),
+                          bg.live.stem.carbon = sum(bg.live.stem.carbon),
+                          tot.live.stem.carbon = sum(tot.live.stem.carbon))
 
 # add zeros
 for (i in 1:6) {
   for (j in 1:3) {
     trt.plot.id = which(live.stem.sum$trt == trts[i] & live.stem.sum$num == j)
     if (length(trt.plot.id) == 0) {
-      zero.row = data.frame(matrix(nrow=1, ncol=4))
+      zero.row = data.frame(matrix(nrow=1, ncol=6))
       colnames(zero.row) = colnames(live.stem.sum)
       zero.row[1, c("trt","trt.full","num")] = c(trts[i], trt.names[i], j)
-      zero.row[1, "live.stem.carbon"] = 0
+      zero.row[1, c("abg.live.stem.carbon","bg.live.stem.carbon","tot.live.stem.carbon")] = 0
       live.stem.sum = rbind(live.stem.sum, zero.row)
     }
   }
@@ -428,14 +440,14 @@ live.stem.sum = live.stem.sum[trt.sort$ix,]
 
 # sum data by species
 live.stem.sp.sum = all.stem.data %>% 
-                   group_by(trt, trt.full, num, species) %>% 
-                   summarize(live.stem.carbon = sum(live.stem.carbon))
+                   group_by(trt, trt.full, num, spp) %>% 
+                   summarize(tot.live.stem.carbon = sum(tot.live.stem.carbon))
 
 # reshape data frame
 stem.sp.wide = pivot_wider(live.stem.sp.sum, 
                            id_cols = c(trt, num),
-                           names_from = species, 
-                           values_from = live.stem.carbon)
+                           names_from = spp, 
+                           values_from = tot.live.stem.carbon)
 stem.sp.wide[is.na(stem.sp.wide)] = 0
 
 # add zeros to diameter sums
@@ -459,7 +471,7 @@ stem.sp.wide = stem.sp.wide[trt.sort$ix,]
 stem.sp.melt = melt(stem.sp.wide, 
                     id.vars=c("trt","num"), 
                     variable.name="species",
-                    value.name="live.stem.carbon")
+                    value.name="tot.live.stem.carbon")
 trt.sort = sort(stem.sp.melt$trt, index.return=T)
 stem.sp.melt = stem.sp.melt[trt.sort$ix,]
 
@@ -467,14 +479,14 @@ stem.sp.melt = stem.sp.melt[trt.sort$ix,]
 write.csv(stem.sp.melt, "Tree_Analysis/Clean_Data/LiveStem_Carbon_Stocks_By_Species.csv", row.names=F)
 
 ################################################################################
-# calculate hypothetical C stock if frax. pen. were alive
+# step: calculate hypothetical C stock if frax. pen. were alive
 
 snag.frax.pen = snag.diams[which(snag.diams$species == "Fraxinus pennsylvanica"),]
 snag.frax.pen$hyp.biomass.live = get_biomass(dbh = snag.frax.pen$dbh, 
                                              genus = snag.frax.pen$genus, 
                                              species = snag.frax.pen$spp, 
                                              coords = c(-90.1835, 41.5542))/kg_per_Mg
-snag.frax.pen$hyp.biomass.live.ha = snag.frax.pen$hyp.biomass.live / (plot.width * plot.length) * m2_per_ha # Mg/ha
+snag.frax.pen$hyp.biomass.live.ha = snag.frax.pen$hyp.biomass.live / plot.area.ha # Mg/ha
 snag.frax.pen$c.content = rep(0,nrow(snag.frax.pen))
 snag.frax.pen$level.c = rep(0,nrow(snag.frax.pen))
 for (i in 1:nrow(snag.frax.pen)) {
@@ -512,14 +524,14 @@ colnames(snag.frax.dead) = c("trt","num","snag.frax.deadC")
 snag.frax.sum = left_join(snag.frax.live, snag.frax.dead,
                           by = c("trt","num"))
 
-### read in calculated tree C stock data ---- #########################
-### double-checked #############################################################
+################################################################################
+# step: read in calculated tree C stock data ---- ##############################
 
 # tree data
 C.stock.data = read.csv("Tree_Analysis/Clean_Data/WoodyBiomass_C_Stocks_By_Plot.csv", header=T)
-C.stock.2022 = C.stock.data[which(C.stock.data$year==2022), c("trt","trt.full","num","abC_ha3")]
+C.stock.2022 = C.stock.data[which(C.stock.data$year==2022), c("trt","trt.full","num","abC_ha3","bgC_ha3","bmC_ha3")]
 C.stock.2022$num = as.character(C.stock.2022$num)
-colnames(C.stock.2022)[4] = c("live.woody.c.stock")
+colnames(C.stock.2022)[4:6] = c("aboveground.woody.c.stock","belowground.woody.c.stock","total.woody.c.stock")
 trt.sort = sort(C.stock.2022$trt, index.return=T)
 C.stock.2022 = C.stock.2022[trt.sort$ix,]
 
@@ -537,12 +549,12 @@ all.bm.data = right_join(all.bm.data,
                          snag.count.sum[,c("trt","trt.full","num","dead.stem.carbonmin")], 
                          by=c("trt","trt.full","num"))
 all.bm.data = right_join(all.bm.data,
-                         live.stem.sum[,c("trt","trt.full","num","live.stem.carbon")], 
+                         live.stem.sum[,c("trt","trt.full","num","abg.live.stem.carbon","bg.live.stem.carbon","tot.live.stem.carbon")], 
                          by=c("trt","trt.full","num"))
 all.bm.data = right_join(all.bm.data, C.stock.2022, by=c("trt","trt.full","num"))
 
-#### read in C stocks for herbaceous litter, FWD, and biomass --- ##############
-### double-checked #############################################################
+################################################################################
+# step: read in C stocks for herbaceous litter, FWD, and biomass
 
 # read in understory data
 understory.data = read.csv("Understory_Analysis/Clean_Data/CN_Stock_Summary_2022.csv", header=T)
@@ -561,7 +573,8 @@ understory.wide = pivot_wider(understory.data,
 colnames(understory.wide)[3:8] = c("HB.C.Mg.ha","MB.C.Mg.ha","PAB.C.Mg.ha",
                                    "HJB.C.Mg.ha","HL.C.Mg.ha","FWD.C.Mg.ha")
 
-## calculate C:N ratios of FWD, HL, and HB
+###############################################################################
+# step: calculate C:N ratios of FWD, HL, and HB
 
 # separate data by type
 understory.fwd = understory.data[which(understory.data$type == "Fine.woody.debris"),]

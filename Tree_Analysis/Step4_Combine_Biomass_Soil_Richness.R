@@ -6,24 +6,26 @@ library(dplyr)
 # treatment labels
 trts = c("A","B","C","D","E","R")
 
-## read in woody biomass/debris and understory C stock data
+################################################################################
+# read in woody biomass/debris and understory C stock data
 c.data = read.csv("Tree_Analysis/Clean_Data/All_Vegetation_C_Stocks_By_Plot.csv")
 
-## read in soil data
+# read in soil data
 soil.data = read.csv("Soil_Analysis/Clean_Data/Soil_Data_Averaged_by_Plot_June2023.csv", header=T)
-
-# update soil data column names
 soil.c.data = soil.data[,c("trt","trt.full","num","maoc.stock","poc.stock","soc.stock","tic.stock","tc.stock")]
 colnames(soil.c.data)[4:8] = c("MAOC","POC","SOC","TIC","TC")
 
-## join vegetation and soil c stocks
+# join vegetation and soil c stocks
 c.data = right_join(c.data, 
                     soil.c.data[,c("trt","trt.full","num","MAOC","POC","SOC","TIC","TC")], 
                     by=c("trt","trt.full","num"))
 
-## estimate aggregate C stocks in different pools
+################################################################################
+# estimate aggregate C stocks in different pools
 c.data = c.data %>%
-         mutate(total.live.carbon = live.woody.c.stock + live.stem.carbon + HB.C.Mg.ha,
+         mutate(total.abg.wood.carbon = abg.live.stem.carbon + aboveground.woody.c.stock,
+                total.bg.wood.carbon = bg.live.stem.carbon + belowground.woody.c.stock,
+                total.live.carbon = total.woody.c.stock + tot.live.stem.carbon + HB.C.Mg.ha,
                 total.dead.carbon = snag.carbonmin + dead.stem.carbonmin + cwd.carbon + int.fwd.carbon + FWD.C.Mg.ha + HL.C.Mg.ha)
 c.data = c.data %>%
          mutate(total.veg.carbon = total.live.carbon + total.dead.carbon,
@@ -31,16 +33,11 @@ c.data = c.data %>%
 
 # estimate aggregate C stocks if frax pen were alive
 c.data = c.data %>%
-         mutate(woody.c.stock.frax.live = live.woody.c.stock + snag.frax.liveC,
+         mutate(woody.c.stock.frax.live = total.woody.c.stock + snag.frax.liveC,
                 snag.c.stock.frax.live = snag.carbonmin - snag.frax.deadC)
-c.data = c.data %>%
-         mutate(total.live.carbon.frax.live = woody.c.stock.frax.live + live.stem.carbon + HB.C.Mg.ha,
-                total.dead.carbon.frax.live = snag.c.stock.frax.live + dead.stem.carbonmin + cwd.carbon + int.fwd.carbon + FWD.C.Mg.ha + HL.C.Mg.ha)
-c.data = c.data %>%
-         mutate(total.veg.carbon.frax.live = total.live.carbon.frax.live + total.dead.carbon.frax.live,
-                total.ecosystem.carbon.frax.live = TC + total.veg.carbon.frax.live)
- 
-## read in tree species data
+
+################################################################################ 
+# read in tree species data
 tree.C.df = read.csv("Tree_Analysis/Clean_Data/WoodyBiomass_C_Stocks_By_Species.csv", header=T)
 
 # combine genus and specific epithet
@@ -91,7 +88,6 @@ for (t in 1:n.t) {
 c.data$num = as.numeric(c.data$num)
 total.sp.2022$num = as.numeric(total.sp.2022$num)
 c.data = right_join(c.data, total.sp.2022, by=c("trt","num"))
-
 
 # write data to file
 write.csv(c.data, "Tree_Analysis/Clean_Data/Clean_Veg_Soil_Cstocks_Richness.csv", row.names=F)
