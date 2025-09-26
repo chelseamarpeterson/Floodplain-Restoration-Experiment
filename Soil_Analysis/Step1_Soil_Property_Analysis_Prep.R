@@ -55,11 +55,13 @@ bd.sum = bd.data %>%
          group_by(Plot,Trt, Num, Quad) %>%
          summarise(mass.water = sum(`Mass.of.water..g.`),
                    sum.soil = sum(`Mass.of.dry.soil..g.`),
-                   sum.vol = sum(`Corrected.volume..cm3.`))
+                   sum.vol = sum(`Corrected.volume..cm3.`),
+                   mass.coarse = sum(`Mass.of.coarse.roots.rocks..g.`))
 bd.sum$Gravimetric.Moisture = bd.sum$mass.water/bd.sum$sum.soil
 bd.sum$Volumetric.Moisture = bd.sum$mass.water/bd.sum$sum.vol
 bd.sum$Bulk.Density = bd.sum$sum.soil/bd.sum$sum.vol
-bd.sum = bd.sum[,-which(colnames(bd.sum) %in% c("mass.water","sum.soil","sum.vol"))]
+bd.sum$Coarse.Material = bd.sum$mass.coarse
+bd.sum = bd.sum[,-which(colnames(bd.sum) %in% c("mass.water","sum.soil","sum.vol","mass.coarse"))]
 
 # average the POM reps
 pom.ave = pom.data[,c("Plot","Trt","Num","Quad","Rep","pon","poc","pom.mass")] %>%
@@ -209,6 +211,7 @@ soil.aves = soil.data %>%
                       silt = mean(silt),
                       clay = mean(clay),
                       bd = mean(bulk.density),
+                      cm = mean(coarse.material),
                       moisture = mean(gravimetric.moisture),
                       temperature = mean(temperature),
                       ph = mean(ph),

@@ -78,7 +78,7 @@ ggplot(df.plot, aes(y=trt, x=mean, color=var)) +
 # Step 3: make combined plot for carbon concentrations and stocks
 
 # IPCC estimates
-ipcc.df = read.csv("IPCC_Carbon_Estimates.csv")
+ipcc.df = read.csv("Carbon_Calculations/IPCC_Carbon_Estimates.csv")
 
 # stacked plot for carbon fractions
 c.labs = c("TIC (%)","POC (%)","MAOC (%)")
@@ -139,6 +139,7 @@ p.c.stocks = ggplot(df.stock[which(df.stock$var %in% stack.vars4),],
                                size=8,fontface="bold")
 p.c.all = p.c.concentrations + p.c.stocks
 p.c.all =  p.c.all + theme(plot.margin = margin(0, 0, 0, 0, "cm"))
+p.c.all
 ggsave("Figures/Figure3_Soil_Carbon_Concentrations_and_Stocks.jpeg", 
        plot=p.c.all, width=30, height=12, units="cm",dpi=600)
 
@@ -315,39 +316,44 @@ r.palette <- tail(brewer.pal(8,"BuPu"),3)
 ipcc.df = ipcc.df[1:2,]
 
 #  live vegetation plot
-stack.vars.l = c("Herbaceous biomass","Live stems (< 2.5 cm)","Live trees (\u2265 2.5 cm)")
+stack.vars.l = c("Herbaceous biomass",
+                 "Belowground woody biomass",
+                 "Aboveground woody biomass")
 ipcc.vars.l = c("Restored temperate forest","Mature temperate forest")
 p.l = ggplot(df.stock[which(df.stock$var %in% stack.vars.l),], 
              aes(y=factor(trt, levels=trt.names), x=mean, 
                  fill=factor(var, levels=stack.vars.l))) +
-  geom_bar(stat="identity",position="stack") + 
-  labs(fill="",y="",
-       x="Posterior mean stock (Mg C/ha)",title="") + 
-  geom_vline(data=ipcc.df,
-             aes(xintercept=abg.value, 
-                 color=factor(abg.type,
-                              levels=ipcc.vars.l),
-                 linetype=factor(abg.type,
-                                 levels=ipcc.vars.l)), 
-             linewidth=1.5) +
-  scale_fill_manual(values=c("olivedrab3","olivedrab4",v.palette[3])) +
-  scale_color_manual(values=c("red","royalblue1")) +
-  scale_linetype_manual(values=c("solid","dashed")) + 
-  guides(fill=guide_legend(order=1),
-         color=guide_legend(title="IPCC aboveground\nwoody biomass",order=2),
-         linetype=guide_legend(title="IPCC aboveground\nwoody biomass",order=2)) +
-  theme(text=element_text(size=14), 
-        legend.key.size=unit(0.7,'cm'),
-        legend.background=element_rect(fill="transparent", color=NA),
-        plot.margin=unit(c(0,0,1,0),"lines"),
-        plot.background=element_rect(color="black",linewidth=1),
-        legend.key=element_rect(fill="darkgrey")) +
-  coord_cartesian(xlim=c(0,150),clip="off") +
-  geom_label(x=267.2,y=6.6,label="a",
-             color="black",fill=alpha("white",0.9),
-             label.r=unit(0,"pt"),label.size=0,
-             size=10,fontface="bold")
+              geom_bar(stat="identity",position="stack") + 
+              labs(fill="",y="",
+                   x="Posterior mean stock (Mg C/ha)",title="") + 
+              geom_vline(data=ipcc.df,
+                         aes(xintercept=woody.value, 
+                             color=factor(woody.type,
+                                          levels=ipcc.vars.l),
+                             linetype=factor(woody.type,
+                                             levels=ipcc.vars.l)), 
+                         linewidth=1.5) +
+              scale_fill_manual(values=c("olivedrab3","olivedrab4",v.palette[3])) +
+              scale_color_manual(values=c("red","royalblue1")) +
+              scale_linetype_manual(values=c("solid","dashed")) + 
+              guides(fill=guide_legend(order=1),
+                     color=guide_legend(title="IPCC total woody biomass",order=2),
+                     linetype=guide_legend(title="IPCC total woody biomass",order=2)) +
+              theme(text=element_text(size=14), 
+                    legend.key.size=unit(0.7,'cm'),
+                    legend.background=element_rect(fill="transparent", color=NA),
+                    plot.margin=unit(c(0,0,1,0),"lines"),
+                    plot.background=element_rect(color="black",linewidth=1),
+                    legend.key=element_rect(fill="darkgrey")) +
+              coord_cartesian(xlim=c(0,180),clip="off") +
+              geom_label(x=338,y=6.6,label="a",
+                         color="black",fill=alpha("white",0.9),
+                         label.r=unit(0,"pt"),label.size=0,
+                         size=10,fontface="bold")
 p.l
+abg.df = df.stock[which(df.stock$var == "Aboveground woody biomass"),]
+bg.df = df.stock[which(df.stock$var == "Belowground woody biomass"),]
+bg.df$mean/(bg.df$mean+abg.df$mean)*100
 
 # debris plot
 stack.vars.d = c("Herbaceous litter","Fine woody debris (< 2.5 cm)",
@@ -371,8 +377,8 @@ p.d = ggplot(df.stock[which(df.stock$var %in% stack.vars.d),],
              scale_linetype_manual(values=c("solid","dashed")) + 
              scale_fill_manual(values=d.palette) + 
              guides(fill=guide_legend(order=1),
-                    color=guide_legend(title="IPCC dead wood & litter",order=2),
-                    linetype=guide_legend(title="IPCC dead wood & litter",order=2)) +
+                    color=guide_legend(title="IPCC litter\nand woody debris",order=2),
+                    linetype=guide_legend(title="IPCC litter\nand woody debris",order=2)) +
              theme(text=element_text(size=14), 
                    legend.key.size=unit(0.7,'cm'),
                    legend.background=element_rect(fill="transparent", color=NA),
@@ -380,7 +386,7 @@ p.d = ggplot(df.stock[which(df.stock$var %in% stack.vars.d),],
                    plot.background=element_rect(color="black",linewidth=1),
                    legend.key=element_rect(fill="darkgrey")) +
              coord_cartesian(xlim = c(0,30.5), clip="off") +
-             geom_label(x=57.9,y=6.6,label="b",
+             geom_label(x=58.9,y=6.6,label="b",
                         color="black",fill=alpha("white",0.9),
                         label.r=unit(0,"pt"),label.size=0,
                         size=10,fontface="bold")
@@ -411,16 +417,16 @@ p.e = ggplot(df.stock[which(df.stock$var %in% stack.vars.e),],
             scale_color_manual(values=c("red","royalblue1")) +
             scale_linetype_manual(values=c("solid","dashed")) +
             guides(fill=guide_legend(order=1),
-                   color=guide_legend(title="IPCC total organic C\n[aboveground &\nsoil (0-30 cm)]",order=2),
-                   linetype=guide_legend(title="IPCC total organic C\n[aboveground &\nsoil (0-30 cm)]",order=2)) +
+                   color=guide_legend(title="IPCC total organic C",order=2),
+                   linetype=guide_legend(title="IPCC total organic C",order=2)) +
             theme(text=element_text(size=14), 
                   legend.key.size=unit(0.7,'cm'),
                   legend.background=element_rect(fill="transparent", color=NA),
                   plot.margin=unit(c(0,0,1,0),"lines"),
                   plot.background=element_rect(color="black",linewidth=1),
                   legend.key=element_rect(fill="darkgrey")) +
-            coord_cartesian(xlim = c(0,260), clip="off") +
-            geom_label(x=464,y=6.6,label="c",
+            coord_cartesian(xlim = c(0,280), clip="off") +
+            geom_label(x=525,y=6.6,label="c",
                        color="black",fill=alpha("white",0.9),
                        label.r=unit(0,"pt"),label.size=0,
                        size=10,fontface="bold")
@@ -451,17 +457,16 @@ p.r = ggplot(data=df.sp.melt) +
                    plot.background=element_rect(color="black",linewidth=1),
                    legend.key=element_rect(fill="darkgrey")) +
              coord_cartesian(xlim=c(0,21),clip="off") +
-             geom_label(x=39.9,y=6.6,label="d",
+             geom_label(x=40.5,y=6.6,label="d",
                         color="black",fill=alpha("white",0.9),
                         label.r=unit(0,"pt"),label.size=0,
                         size=10,fontface="bold")
 p.r
 
 # combine all plots
-p.c.stocks = (p.l+theme(plot.margin=unit(c(0,1,0,0),"pt"))+p.d)/(p.e+theme(plot.margin=unit(c(0,1,0,0),"pt"))+p.r)
-p.c.save = p.c.stocks + theme(plot.margin = margin(0, 0, 0, 0, "cm"))
-
+p.c.stocks = (p.l+theme(plot.margin=unit(c(0,0,0,0),"pt"))+p.d)/(p.e+theme(plot.margin=unit(c(0,16,0,0),"pt"))+p.r)
+p.c.stocks
 ggsave("Figures/Figure6_Veg_Ecosystem_Cstocks_Richness.jpeg", 
-       plot=p.c.save, width=40, height=23, units="cm", dpi=1000)
+       plot=p.c.stocks, width=40, height=23, units="cm", dpi=1000)
 
 
