@@ -23,7 +23,7 @@ df.soil = read.csv("Soil_Analysis/Posteriors/All_Soil_Posterior_Intervals_ChainC
 df.stock = read.csv("Tree_Analysis/Posteriors/CarbonRichness_Means_Intervals_5Chains.csv")
 
 # soil variable labels
-soil.var.labs = c("SOM (%)","TOC (%)","TIC (%)","MAOC (%)","POC (\u2265 53 \U00B5m)","TC (%)","TN (%)","C:N Ratio",
+soil.var.labs = c("SOM (%)","TOC (%)","TIC (%)","MAOC (%)","POC (%)","TC (%)","TN (%)","C:N Ratio",
                   "Temperature (C)","Gravitational moisture (%)","Bulk density (g/cm3)",
                   "Sand (%)","Silt (%)","Clay (%)","NO3 (ppm)","NH4 (ppm)","P (ppm)",
                   "K (ppm)","Ca (ppm)","Mg (ppm)","K (meq)","Ca (meq)","Mg (meq)",
@@ -469,4 +469,50 @@ p.c.stocks
 ggsave("Figures/Figure6_Veg_Ecosystem_Cstocks_Richness.jpeg", 
        plot=p.c.stocks, width=40, height=23, units="cm", dpi=1000)
 
+################################################################################
+# Step 7: plot C stocks by species for snags, coarse woody debris, live trees,
+# and herbaceous layer species
+
+# read in posterior intervals
+post.df.spp = read.csv("Tree_Analysis/Posteriors/VegetationCarbonStocks_Species_Means_Intervals_5Chains.csv")
+
+# plot stacked means for live woody, snag/CWD area, and biomass stocks by species
+type.rows = c("live.trees","dead.trees","coarse.woody.debris")
+type.labs = c("Live trees (\u2265 2.5 cm)",
+              "Standing dead trees (\u2265 2.5 cm)",
+              "Coarse woody debris (\u2265 7.6 cm)")
+post.df.woodC = post.df.spp[which(post.df.spp$type %in% type.rows),]
+post.df.woodC$type.lab = rep(0, nrow(post.df.woodC))
+for (i in 1:3) { post.df.woodC$type.lab[which(post.df.woodC$type == type.rows[i])] = type.labs[i] }
+post.df.woodC$spp = trimws(post.df.woodC$spp)
+all.sp = sort(unique(post.df.woodC$spp))
+p.woodyC = ggplot(post.df.woodC, 
+                  aes(x=mean, 
+                      y=factor(trt, levels=trt.names),
+                      fill=factor(spp, levels=all.sp))) + 
+                  geom_bar(stat="identity") +
+                  facet_wrap(.~factor(type.lab, levels=type.labs), 
+                             scales="free_x", ncol=1) +
+                  labs(x="Posterior mean C stock (Mg/ha)", y="", fill="Species") +
+                  guides(fill=guide_legend(ncol=1)) + 
+                  theme(text = element_text(size=14))
+p.woodyC
+ggsave("Figures/FigureB1_Woody_C_Stocks_By_Species.jpeg", 
+       plot=p.woodyC, width=17, height=19, units="cm")
+
+# plot stacked means for herbaceous species grounds
+post.df.herbC = post.df.spp[which(post.df.spp$type == "herbaceous.biomass"),]
+spp.herbC = levels(factor(post.df.herbC$spp))
+p.herbC = ggplot(post.df.herbC, 
+                 aes(x=mean,
+                     y=factor(trt, levels=trt.names), 
+                     fill=factor(spp, levels=spp.herbC))) + 
+                 geom_bar(stat = "identity") + 
+                 labs(y="", x="Posterior mean C stock (Mg/ha)", 
+                      title = "",
+                      fill="Species group") + 
+                 theme(text = element_text(size=14))
+p.herbC
+ggsave("Figures/FigureB2_Herbaceous_C_Stocks_By_Species.jpeg", 
+       plot=p.herbC, width=18, height=10, units="cm")
 

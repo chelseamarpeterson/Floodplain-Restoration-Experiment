@@ -1,4 +1,4 @@
-Plot,Rep,Dry POM mass (g),POM-N (%),POM-C (%)
+Treatment_Plot_Quadrat,Rep,Dry POM mass (g),POM-N (%),POM-C (%)
 A1 Q1,A,1.21,0.23,3.19
 A1 Q2,A,0.94,0.37,4.76
 A1 Q3,A,0.66,0.52,6.58

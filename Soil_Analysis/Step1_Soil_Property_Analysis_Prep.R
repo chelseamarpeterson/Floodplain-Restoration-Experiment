@@ -10,115 +10,121 @@ library(viridis)
 library(tidyverse)
 
 ################################################################################
-## Step 1: Data upload and preparation
+## step 1: data upload and preparation
 
 # treatment names
 trts = c("A","B","C","D","E","R")
 trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
 
 # read in all soil data
-temp.data = read.csv("Raw_Data/Soil_Temperature_June2023.csv")[,seq(1,4)]
+temp.data = read.csv("Raw_Data/Soil_Temperature_June2023.csv")[,seq(1,6)]
 bd.data = read.csv("Raw_Data/Bulk_Density_June2023.csv")
 chem.data = read.csv("Raw_Data/Waypoint_Results_June2023.csv")
 cn.data = read.csv("Raw_Data/TC_TOC_Results_2025.csv")
 pom.data = read.csv("Raw_Data/POM_Results_2025.csv")
+quad.data = read.csv("Raw_Data/Quadrat_GIS_Data_PolygonMean_WGS1984Aux_2020Lidar.csv")
 
 # split plot name column
-temp.data = temp.data %>% separate(Plot, c("Trt", "Num"), sep = 1, remove = F)
-bd.data = bd.data %>% separate(Plot, c("Trt", "Num"), sep = 1, remove = F)
-chem.data = chem.data %>% separate(Plot, c("Trt", "Num"), sep = 1, remove = F)
-cn.data = cn.data %>% separate(Plot, c("Plot", "Quad"), sep = " ", remove = T)
-cn.data = cn.data %>% separate(Plot, c("Trt", "Num"), sep = 1, remove = F)
-pom.data = pom.data %>% separate(Plot, c("Plot", "Quad"), sep = " ", remove = T)
-pom.data = pom.data %>% separate(Plot, c("Trt", "Num"), sep = 1, remove = F)
+bd.data = bd.data %>% separate(Treatment_Plot, c("Treatment","Plot"), sep = 1, remove = T)
+chem.data = chem.data %>% separate(Treatment_Plot, c("Treatment","Plot"), sep = 1, remove = T)
+cn.data = cn.data %>% separate(Treatment_Plot_Quadrat, c("Treatment_Plot","Quadrat"), sep = " ", remove = T)
+cn.data = cn.data %>% separate(Treatment_Plot, c("Treatment","Plot"), sep = 1, remove = T)
+pom.data = pom.data %>% separate(Treatment_Plot_Quadrat, c("Treatment_Plot","Quadrat"), sep = " ", remove = T)
+pom.data = pom.data %>% separate(Treatment_Plot, c("Treatment","Plot"), sep = 1, remove = T)
 
 # update column names
-colnames(temp.data)[6] = "Temperature"
-colnames(chem.data)[seq(9,27)] = c("Texture.Class","pH","P",
-                                   "K","Ca","Mg","SOM",
-                                   "N.rel","NO3","NH4","CEC",
-                                   "K.sat","Ca.sat","Mg.sat","H.sat",
-                                   "K.meq","Ca.meq","Mg.meq","H.meq")
-colnames(bd.data)[c(5,6,21,22,23)] = c("Quad","Depth","Gravimetric.Moisture",
-                                       "Volumetric.Moisture","Bulk.Density")
-colnames(cn.data)[seq(5,9)] = c("bulk.N","bulk.C","bulk.CN","ton","toc")
-colnames(pom.data)[seq(6,8)] = c("pom.mass","pon","poc")
+colnames(temp.data)[5] = "temperature"
+colnames(chem.data)[seq(8,26)] = c("texture.class","ph","p",
+                                   "k","ca","mg","som.percent",
+                                   "n.release","no3.n","nh4.n","cec",
+                                   "k.sat","ca.sat","mg.sat","h.sat",
+                                   "k.meq","ca.meq","mg.meq","h.meq")
+colnames(bd.data)[c(5,20,21,22)] = c("Depth","gravimetric.moisture",
+                                     "volumetric.moisture","bulk.density")
+colnames(cn.data)[seq(4,8)] = c("bulk.n.percent","bulk.c.percent","bulk.cn.ratio","ton.percent","toc.percent")
+colnames(pom.data)[seq(5,7)] = c("pom.mass","pon.percent","poc.percent")
+colnames(quad.data)[5:6] = c("elevation.mean","vegetation.height.mean")
 
 # assume second R1 Q1 is equal to R1 Q3
-bd.ind1 = which((bd.data$Plot == "R1" & bd.data$Quad == "Q1") & bd.data$Depth == "0-15")[2]
-bd.ind2 = which((bd.data$Plot == "R1" & bd.data$Quad == "Q3") & bd.data$Depth == "0-15")
-bd.data[bd.ind2, colnames(bd.data)[7:24]] = bd.data[bd.ind1, colnames(bd.data)[7:24]]
+bd.ind1 = which((bd.data$Treatment == "R" & bd.data$Plot == "1") & (bd.data$Quadrat == "Q1" & bd.data$Depth == "0-15"))[2]
+bd.ind2 = which((bd.data$Treatment == "R" & bd.data$Plot == "1") & (bd.data$Quadrat == "Q3" & bd.data$Depth == "0-15"))
+bd.data[bd.ind2, colnames(bd.data)[6:23]] = bd.data[bd.ind1, colnames(bd.data)[6:23]]
 bd.data = bd.data[-bd.ind1,]
 
 # compute moisture and bulk density for 0-30 cm
 bd.sum = bd.data %>% 
-         group_by(Plot,Trt, Num, Quad) %>%
+         group_by(Treatment, Plot, Quadrat) %>%
          summarise(mass.water = sum(`Mass.of.water..g.`),
                    sum.soil = sum(`Mass.of.dry.soil..g.`),
                    sum.vol = sum(`Corrected.volume..cm3.`),
                    mass.coarse = sum(`Mass.of.coarse.roots.rocks..g.`))
-bd.sum$Gravimetric.Moisture = bd.sum$mass.water/bd.sum$sum.soil
-bd.sum$Volumetric.Moisture = bd.sum$mass.water/bd.sum$sum.vol
-bd.sum$Bulk.Density = bd.sum$sum.soil/bd.sum$sum.vol
-bd.sum$Coarse.Material = bd.sum$mass.coarse
+bd.sum$gravimetric.moisture = bd.sum$mass.water/bd.sum$sum.soil
+bd.sum$volumetric.moisture = bd.sum$mass.water/bd.sum$sum.vol
+bd.sum$bulk.density = bd.sum$sum.soil/bd.sum$sum.vol
+bd.sum$coarse.material = bd.sum$mass.coarse
 bd.sum = bd.sum[,-which(colnames(bd.sum) %in% c("mass.water","sum.soil","sum.vol","mass.coarse"))]
 
 # average the POM reps
-pom.ave = pom.data[,c("Plot","Trt","Num","Quad","Rep","pon","poc","pom.mass")] %>%
-          group_by(Plot, Trt, Num, Quad) %>%
-          summarize(pon = mean(pon*pom.mass/10),
-                    poc = mean(poc*pom.mass/10)) # POM-C (%) = (g POM-C/g POM)*(g POM/g soil)
+pom.ave = pom.data[,c("Treatment","Plot","Quadrat","Rep",
+                      "pon.percent","poc.percent","pom.mass")] %>%
+          group_by(Treatment, Plot, Quadrat) %>%
+          summarize(pon.percent = mean(pon.percent*pom.mass/10),
+                    poc.percent = mean(poc.percent*pom.mass/10)) # POM-C (%) = (g POM-C/g POM)*(g POM/g soil)
 
-# sort chem data by treatment and quadrat
-chem.sort = sort(chem.data$Plot, index.return=T)
-chem.data = chem.data[chem.sort$ix,]
+# add full treatment name
+temp.data$full.treatment.name = rep(0, nrow(temp.data))
+for (i in 1:6) { temp.data$full.treatment.name[which(temp.data$Treatment == trts[i])] = trt.names[i] }
 
-# combine all bulk density, moisture, temperature, C/N, and other chemical data
-soil.data = right_join(temp.data[,-which(colnames(temp.data) %in% c("Date","BD15.Starting.Depth"))], bd.sum, 
-                       by=c("Plot","Trt","Num","Quad"))
-soil.data = right_join(soil.data, cn.data, by=c("Plot","Trt","Num","Quad"))
-soil.data = right_join(soil.data, chem.data[,-which(colnames(chem.data) %in% c("Number","Note"))], 
-                       by=c("Plot","Trt","Num","Quad"))
-soil.data = right_join(soil.data, pom.ave, by=c("Plot","Trt","Num","Quad"))
-
-# remove miscellaneous or redundant columns
-leave.out = c("Texture.Class","H.sat","K.sat","Ca.sat","Mg.sat","N.rel")
-soil.data = soil.data[,-which(colnames(soil.data) %in% leave.out)]
+# combine all bulk density, moisture, temperature, C/N, vegetation height, elevation, and other chemical data
+temp.data$Plot = as.character(temp.data$Plot)
+quad.data$Plot = as.character(quad.data$Plot)
+soil.data = left_join(temp.data[,c("full.treatment.name","Treatment","Plot","Quadrat","temperature")], 
+                      bd.sum, 
+                      by=c("Treatment","Plot","Quadrat"))
+soil.data = left_join(soil.data, 
+                      cn.data,
+                      by=c("Treatment","Plot","Quadrat"))
+soil.data = left_join(soil.data, 
+                      chem.data[,-which(colnames(chem.data) %in% c("Number","Note"))], 
+                      by=c("Treatment","Plot","Quadrat"))
+soil.data = left_join(soil.data, 
+                      pom.ave,
+                      by=c("Treatment","Plot","Quadrat"))
+soil.data = left_join(soil.data,
+                      quad.data[,-which(colnames(quad.data) %in% c("Trt_Plot_Quad","Shape_Length","Shape_Area"))], 
+                      by=c("Treatment","Plot","Quadrat"))
 
 ################################################################################
-## Step 2: Clean up aggregate data 
+## step 2: clean up aggregate data 
 
 # load mass data
 ag.data = read.csv("Raw_Data/Aggregate_Masses_2023.csv")
 
 # update columns
-key.cols = c("Boat.number","Size.class","Sample.number","Mass.of.sample.w.o.fragments..g.")
+key.cols = c("Size.class","Treatment_Plot_Quadrat","Mass.of.sample.w.o.fragments..g.")
 ag.data = ag.data[,colnames(ag.data) %in% key.cols]
-colnames(ag.data) = c("boat","size","sample","soil.mass")
+colnames(ag.data) = c("size","treatment_plot_quadrat","soil.mass")
 
-# histogram of fPOM values
-#hist(ag.data[which(ag.data$size == "fPOM"),"soil.mass"]$soil.mass)
-
-# split sample number into plot and quadrat, plot into trt and num
-ag.data = ag.data %>% separate(sample, c("plot","quad"), sep = " ", remove = F)
-ag.data = ag.data %>% separate(plot, c("trt","num"), sep = 1, remove = F)
+# split sample plotber into plot and quadrat, plot into trt and plot
+ag.data = ag.data %>% separate(treatment_plot_quadrat, c("treatment_plot","quadrat"), sep=" ", remove=T)
+ag.data = ag.data %>% separate(treatment_plot, c("treatment","plot"), sep=1, remove=F)
 
 # size classes, plots, and quadrats
 sizes = c("fPOM",">4.75 mm",">2 mm",">250 um",">53 um","<=53 um")         
-plots = sort(unique(ag.data$plot))
-quads = sort(unique(ag.data$quad))
+trt_plots = sort(unique(ag.data$treatment_plot))
+quads = sort(unique(ag.data$quadrat))
 n.s = length(sizes)
-n.p = length(plots)
+n.tp = length(trt_plots)
 
 # make new dataframe to estimate mass of fraction <53 um
-ag.df = data.frame(matrix(nrow=0, ncol=7))
-ag.cols = c("size","plot","trt","num","quad","soil.mass","rel.mass")
+ag.df = data.frame(matrix(nrow=0, ncol=6))
+ag.cols = c("size","treatment","plot","quadrat","soil.mass","rel.mass")
 colnames(ag.df) = ag.cols
 ag.data$rel.mass = rep(0, nrow(ag.data))
-for (p in plots) {
+for (p in trt_plots) {
   for (q in quads) {
     # plot and quadrat id
-    pq.id = which(ag.data$plot == p & ag.data$quad == q)
+    pq.id = which(ag.data$treatment_plot == p & ag.data$quadrat == q)
     
     # get total mass and estimate <53 mass
     pq.full.mass = ag.data[which(ag.data[pq.id,"size"] == "Full"),"soil.mass"]
@@ -128,10 +134,10 @@ for (p in plots) {
     pq.df = ag.data[pq.id[2:length(pq.id)], ag.cols]
     
     # add row to p and q dataframe
-    pq.row = data.frame(matrix(nrow=1, ncol=7))
+    pq.row = data.frame(matrix(nrow=1, ncol=6))
     colnames(pq.row) = ag.cols
     pq.row[1, "size"] = "<=53 um"
-    pq.row[1, ag.cols[2:6]] = pq.df[1, ag.cols[2:6]]
+    pq.row[1, ag.cols[2:4]] = pq.df[1, ag.cols[2:4]]
     pq.row[1, c("soil.mass","rel.mass")] = c(pq.53.mass, 0)
     pq.df = rbind(pq.df, pq.row)
     
@@ -144,7 +150,7 @@ for (p in plots) {
 }
 
 # make all categorical variables into factors
-ag.df$quad = as.factor(ag.df$quad)
+ag.df$quadrat = as.factor(ag.df$quadrat)
 ag.df$size = factor(ag.df$size, levels=sizes)
 
 # convert to long form
@@ -154,8 +160,8 @@ for (i in 1:n.s) {
   size.id = which(ag.df$size == sizes[i])
   ag.df[size.id,"size.lab"] = size.labs[i]
 }
-ag.new = ag.df[,c("trt","num","quad","rel.mass","size.lab")]
-ag.wide = pivot_wider(ag.new,id_cols = c(trt, num, quad),
+ag.new = ag.df[,c("treatment","plot","quadrat","rel.mass","size.lab")]
+ag.wide = pivot_wider(ag.new,id_cols = c(treatment, plot, quadrat),
                       names_from = size.lab, values_from = rel.mass)
 
 # compute mean weight diameter from aggregate size distribution
@@ -166,60 +172,38 @@ ag.wide$MWD = (mean.diams[1]*ag.wide$g53um + mean.diams[2]*ag.wide$g250um + mean
 # add aggregate data to soil dataframe
 colnames(soil.data) = tolower(colnames(soil.data))
 colnames(ag.wide) = tolower(colnames(ag.wide))
-soil.data = right_join(soil.data, ag.wide, by=c("trt","num","quad"))
+soil.data = right_join(soil.data, ag.wide, by=c("treatment","plot","quadrat"))
 
 ################################################################################
-## Step 3: Final data cleaning and saving to file
-
-# add full treatment name
-soil.data$trt.full = rep(0, nrow(soil.data))
-for (i in 1:6) { soil.data$trt.full[which(soil.data$trt == trts[i])] = trt.names[i] }
+## step 3: final data cleaning and writing to file
 
 # calculate inorganic and mineral-associated organic c
-soil.data$bulk.c = pmax(soil.data$bulk.c, soil.data$toc)
-soil.data$tic = soil.data$bulk.c - soil.data$toc
-soil.data$maoc = pmax(soil.data$toc - soil.data$poc, 0)
+soil.data$bulk.c.percent = pmax(soil.data$bulk.c.percent, soil.data$toc.percent)
+soil.data$tic.percent = soil.data$bulk.c.percent - soil.data$toc.percent
+soil.data$maoc.percent = pmax(soil.data$toc.percent - soil.data$poc.percent, 0)
 
 # calculate POC:MAOC ratio
-soil.data$poc_maoc = soil.data$poc/soil.data$maoc
+soil.data$poc.maoc.ratio = soil.data$poc.percent/soil.data$maoc.percent
 
 # write all soil data at quadrat level to csv
-id.vars = c("plot","trt","trt.full","num","quad")
-soil.vars = colnames(soil.data)[-which(colnames(soil.data) %in% id.vars)]
-write.csv(soil.data[,c(id.vars,soil.vars)], "Clean_Data/All_Soil_Data_2023.csv", row.names=F)
+write.csv(soil.data, "Clean_Data/Soil_Data_by_Quadrat_June2023.csv", row.names=F)
 
 ################################################################################
-## Step 4: calculate averages at the plot level
+## step 4: calculate average c stocks at plot level
 
 # estimate SOC stocks (Mg/ha)
-soil.data$tic.stock = soil.data$tic * soil.data$bulk.density * 30
-soil.data$maoc.stock = soil.data$maoc * soil.data$bulk.density * 30
-soil.data$poc.stock = soil.data$poc * soil.data$bulk.density * 30
-soil.data$soc.stock = soil.data$toc * soil.data$bulk.density * 30
-soil.data$tc.stock = soil.data$bulk.c * soil.data$bulk.density * 30
+soil.data$tic.stock = soil.data$tic.percent * soil.data$bulk.density * 30
+soil.data$maoc.stock = soil.data$maoc.percent * soil.data$bulk.density * 30
+soil.data$poc.stock = soil.data$poc.percent * soil.data$bulk.density * 30
+soil.data$soc.stock = soil.data$toc.percent * soil.data$bulk.density * 30
+soil.data$tc.stock = soil.data$bulk.c.percent * soil.data$bulk.density * 30
 
 # average results across plots and write to csv
 soil.aves = soil.data %>% 
-            group_by(plot, trt, trt.full, num) %>%
+            group_by(full.treatment.name, treatment, plot) %>%
             summarize(maoc.stock = mean(maoc.stock),
                       poc.stock = mean(poc.stock),
                       soc.stock = mean(soc.stock),
                       tic.stock = mean(tic.stock),
-                      tc.stock = mean(tc.stock),
-                      cn.ratio = mean(bulk.cn),
-                      sand = mean(sand),
-                      silt = mean(silt),
-                      clay = mean(clay),
-                      bd = mean(bulk.density),
-                      cm = mean(coarse.material),
-                      moisture = mean(gravimetric.moisture),
-                      temperature = mean(temperature),
-                      ph = mean(ph),
-                      p = mean(p),
-                      k = mean(k),
-                      ca = mean(ca),
-                      mg = mean(mg),
-                      no3 = mean(no3),
-                      nh4 = mean(nh4),
-                      cec = mean(cec))
-write.csv(soil.aves, "Clean_Data/Soil_Data_Averaged_by_Plot_June2023.csv", row.names=F)
+                      tc.stock = mean(tc.stock))
+write.csv(soil.aves, "Clean_Data/Mean_Soil_Cstocks_by_Plot_June2023.csv", row.names=F)

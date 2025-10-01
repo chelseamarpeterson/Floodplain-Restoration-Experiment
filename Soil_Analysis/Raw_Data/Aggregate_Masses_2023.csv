@@ -1,4 +1,4 @@
-Boat number,Size class,Sample number,Mass of boat (g),Mass of boat + sample (g),Mass of sample (g),Sieve date,Mass of tin (g),Mass of tin + fragments (g),Mass of fragments (g),Mass of sample w/o fragments (g),Start dry time,All water evaporated time,Removed from oven time,Notes
+Boat number,Size class,Treatment_Plot_Quadrat,Mass of boat (g),Mass of boat + sample (g),Mass of sample (g),Sieve date,Mass of tin (g),Mass of tin + fragments (g),Mass of fragments (g),Mass of sample w/o fragments (g),Start dry time,All water evaporated time,Removed from oven time,Notes
 1-Jan,Full,R1 Q1,13.62,113.95,100.33,6/28/2023,,,0.0093,100.3207,,,,
 1-Feb,>4.75 mm,R1 Q1,13.56,18.43,4.87,6/28/2023,1.1138,1.119,0.0052,4.8648,6/28/2023,6/29/2023,6/30/2023,
 1-Mar,>2 mm,R1 Q1,13.42,33.64,20.22,6/28/2023,1.1012,1.1044,0.0032,20.2168,6/28/2023,7/4/2023 9:00,7/5/2023 9:00,
