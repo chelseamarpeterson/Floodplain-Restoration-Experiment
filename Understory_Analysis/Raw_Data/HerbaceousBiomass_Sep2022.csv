@@ -1,4 +1,4 @@
-Plot,Quadrat,Spp,Actual dry mass + container w/o bag (g),Container mass (g),Actual dry mass w/o bag (g)
+Treatment_Plot,Quadrat,Spp,Actual dry mass + container w/o bag (g),Container mass (g),Actual dry mass w/o bag (g)
 A1,Q4,Impatiens capensis,407.11,406.57,0.54
 B1,Q2,Humulus japonicus,424.37,406.5,17.87
 B1,Q4,Acer saccharinum,406.74,406.55,0.19

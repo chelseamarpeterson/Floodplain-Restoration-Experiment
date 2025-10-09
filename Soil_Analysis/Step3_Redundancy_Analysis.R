@@ -3,38 +3,38 @@ setwd(path_to_repo)
 
 library(ggplot2)
 library(ggfortify)
-library(patchwork)
 library(ggrepel)
 library(tidyr)
 library(dplyr)
 library(vegan)
 
-## treatment names
+### script that implements redundancy analysis on subset of independent variables
+### to explain variation in SOC, POC, MOC, and the POC:MOC ratio
+
+# treatments
 trt.letters = c("A","B","C","D","E","R")
 trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
+n.t = length(trt.letters)
 
-## read in all soil data
+# read in all soil data
 soil.df = read.csv("Soil_Analysis/Clean_Data/Soil_Data_by_Quadrat_June2023.csv")
 
 # soil data labels
-ag.cols = c("fpom","g475mm","g2mm","g250um","g53um","l53um","mwd")
+ag.cols = c("fpom","g475mm","g2mm","g250um","g53um","l53um")
 cat.cols = c("k","ca","mg")
-meq.cols = c("k.meq","ca.meq","mg.meq")
+meq.cols = c("k.meq","ca.meq","mg.meq","h.meq")
 text.cols = c("Sand","Silt","Clay")
 
 # variables to omit
-leave.out = c("ton.percent","pon.percent","texture.class","n.release",
-              "volumetric.moisture","coarse.material",
-              "k.sat","ca.sat","mg.sat","h.sat","h.meq",
-              ag.cols[1:6],meq.cols)
+leave.out = c("texture.class","n.release","volumetric.moisture","coarse.material",
+              ag.cols,meq.cols)
 soil.df = soil.df[,-which(colnames(soil.df) %in% leave.out)]
 
-## read in biomass data
-bm.df = read.csv("Understory_Analysis/Clean_Data/Biomass_By_Quadrat_and_Year.csv")
-bm.df.2022 = bm.df[which(bm.df$year == 2022),-which(colnames(bm.df) == "year")]
+# read in biomass data
+bm.df = read.csv("Understory_Analysis/Clean_Data/Biomass_By_Quadrat_Fall2022.csv")
 
 # combine biomass and soil data
-soil.bm.df = left_join(soil.df, bm.df.2022, 
+soil.bm.df = left_join(soil.df, bm.df, 
                        by=c("full.treatment.name","treatment","plot","quadrat"))
 
 # remove reference
@@ -42,12 +42,12 @@ soil.bm.df = soil.bm.df[-which(soil.bm.df$treatment == "R"),]
 
 # update column names
 colnames(soil.bm.df)[5:36] = c("Temp","Moist","BD","TN","TC","CN","SOC",text.cols,
-                               "pH","P","K","Ca","Mg","SOM","NO3","NH4","CEC","POC",
-                               "EV","HT","MWD","TIC","MAOC","POC_MAOC",
+                               "pH","P","K","Ca","Mg","SOM","NO3","NH4","CEC",
+                               "POC","EV","HT","MWD","TIC","MOC","POC_MOC",
                                "HB","HL","FWD","MB","PAB","HJB")
- 
+
 # select explanatory and response variables
-y.cols = c("SOC","POC","MAOC","POC_MAOC")
+y.cols = c("SOC","POC","MOC","POC_MOC")
 x.cols = c("Temp","Moist","BD","TN","CN","Sand","Clay",
            "pH","P","NO3","NH4","CEC","EV","HT",
            "MWD","HL","FWD","MB","PAB","HJB")
@@ -105,20 +105,78 @@ rda.plot <- ggplot(data=df1) +
                    theme(text=element_text(size=12))
 rda.plot
 
-#df3$rows = rownames(df3)
-#var.sort1 = sort(df3[,"RDA1"], decreasing=T, index.return=T)
-#df3[var.sort1$ix, c("RDA1","rows")]
+# sort variable strength along each axis
+df3$rows = rownames(df3)
+var.sort1 = sort(df3[,"RDA1"], decreasing=T, index.return=T)
+df3[var.sort1$ix, c("RDA1","rows")]
 
-#var.sort2 = sort(df3[,"RDA2"], decreasing=T, index.return=T)
-#df3[var.sort2$ix, c("RDA2","rows")]
+var.sort2 = sort(df3[,"RDA2"], decreasing=T, index.return=T)
+df3[var.sort2$ix, c("RDA2","rows")]
 
 # write plot
 ggsave("Figures/Figure5_Soil_Vegetation_RDA_HTElev.jpeg", 
        plot=rda.plot, width=26, height=20, units="cm", dpi=600)
 
 # compute Pearsons r^2 to confirm inference about correlations
-# among SOC, MAOC, POC, and POC:MAOC ratio
-#cor(df.scale$SOC, df.scale$MAOC, method = "pearson")
-#cor(df.scale$SOC, df.scale$POC, method = "pearson")
-#cor(df.scale$SOC, df.scale$POC_MAOC, method = "pearson")
+# among SOC, MOC, POC, and POC:MOC ratio
+cor(df.scale$SOC, df.scale$MOC, method = "pearson")
+cor(df.scale$SOC, df.scale$POC, method = "pearson")
+cor(df.scale$SOC, df.scale$POC_MOC, method = "pearson")
 
+## make heatmap of pearson R^2 for all RDA variables
+
+# variable names
+variables <- names(df.scale)
+
+# make rsquared list
+cor.list <- list()
+
+# loop through each variable pair
+for (y.var in variables) {
+  for (x.var in variables) {
+    if (x.var == y.var) {
+      next # Skip self-correlation
+    }
+    
+    # Build the regression formula and fit the model
+    #formula <- as.formula(paste(y.var, "~", x.var))
+    #model <- lm(formula, data=df.scale)
+    
+    # Extract the R-squared value and store it
+    #cor.list[[paste(y.var, x.var, sep = "~")]] <- summary(model)$r.squared
+    cor.list[[paste(y.var, x.var, sep = "~")]] <- cor(df.scale[,y.var], df.scale[,x.var], method = "pearson")
+  }
+}
+
+# convert list to dataframe
+cor.df <- enframe(cor.list) %>%
+                  separate(name, into = c("y","x"), sep="~") %>%
+                  rename(r=value)
+
+# fill diagonal with 1 for visual completeness if needed
+cor.df.full <- data.frame(expand.grid(y=variables, x=variables) %>%
+                             left_join(cor.df, by = c("y","x")))
+for (i in 1:24) { cor.df.full$r[[25*(i-1)+1]] = 1 }
+for (i in 1:576) { cor.df.full$r[[i]] = as.numeric(cor.df.full$r[[i]]) }
+cor.df.full = data.frame(as.matrix(cor.df.full))
+cor.df.plot = data.frame(matrix(nrow=576,ncol=0))
+cor.df.plot$x = factor(unlist(cor.df.full$x))
+cor.df.plot$y = factor(unlist(cor.df.full$y))
+cor.df.plot$r = unlist(cor.df.full$r)
+ggplot(cor.df.plot, aes(x=factor(x), y=factor(y), 
+                         size=r, color=r)) +
+       geom_point() +
+       scale_color_viridis_c(
+          option = "turbo",
+          direction = 1, # reverse the direction for higher values = warmer colors
+          limits = c(-1, 1), # ensure consistent color scale
+          name = expression(r) # label the legend with R-squared
+       ) +
+       scale_size_continuous(range = c(1, 5), name = expression(r)) +
+       labs(x="",y="") +
+       theme_minimal() +
+       theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1), # rotate x-axis labels
+              panel.grid.major = element_blank(), # remove grid lines for a cleaner look
+              legend.position = "right",
+              plot.title = element_text(hjust = 0.5))
+  

@@ -1,90 +1,82 @@
-path_to_tree_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch1/Public-Repo/Tree_Analysis"
+path_to_tree_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Chapter2/Floodplain-Experiment-Repo/Tree_Analysis"
 setwd(path_to_tree_folder)
 
 library(tidyr)
 
-### script that loads and cleans diameter-at-breast-height (DBH) data from 
+### script that loads and cleans diameter-at-breast-height (dbh.cm) data from 
 ### Joslin wetland mitigation site in Henry County
 
-## define important variables
-trts = c("A","B","C","D","E","R")
+# define important variables
+trt.letters = c("A","B","C","D","E","R")
 trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
-years = c(2013, 2022)
-n.trt = length(trts)
-n.plot = 3
-n.yrs = 2
+n.t = length(trt.letters)
+n.p = 3
 
-## read in data from 2013, 2020, and 2023
-data.2013 = read.csv('Raw_Data/DBH_2013.csv')
+# conversions
+cm.per.m = 100
+
+# read in data from 2022 and re-sample data from 2023
 data.2022 = read.csv('Raw_Data/DBH_August2022.csv')
 data.2023 = read.csv('Raw_Data/DBH_Snags_June2023.csv', header=T)
 
 # update column names
-colnames(data.2013) = c("plot","spp","dbh","basal.area","stem.count")
-colnames(data.2022) = c("plot","spp","dbh","stem.count")
-colnames(data.2023) = c("redo","plot","live","spp","dbh","stem.count","notes")
-
-# clean up 2013 data
-data.2013 = data.2013[-which(data.2013['dbh'] == "<50"),-which(colnames(data.2013) %in% c("stem.count"))] # remove rows with dbh <5 cm
-data.2013$dbh = as.numeric(unlist(data.2013[,'dbh']))/10 # convert mm to cm
-data.2013$basal.area = as.numeric(unlist(data.2013[,'basal.area']))
-data.2013$year = 2013
+colnames(data.2022) = c("treatment_plot","spp","dbh.cm","stem.count")
+colnames(data.2023) = c("redo","treatment_plot","live","spp","dbh.cm","stem.count","notes")
 
 # clean up 2022 data
-data.2022 = data.2022[-which(data.2022['dbh'] == "<3"),-which(colnames(data.2022) %in% c("stem.count"))] # remove rows with dbh <3 cm
-data.2022$dbh = as.numeric(unlist(data.2022[,'dbh']))
-data.2022$basal.area = pi*(data.2022$dbh/100/2)^2  # m^2
+data.2022 = data.2022[-which(data.2022['dbh.cm'] == "<3"),
+                      -which(colnames(data.2022) %in% c("stem.count"))] # remove rows with dbh.cm <3 cm
+data.2022$dbh.cm = as.numeric(unlist(data.2022[,'dbh.cm']))
+data.2022$basal.area.m2 = pi*(data.2022$dbh.cm/cm.per.m/2)^2  
 data.2022$year = 2022
+data.2022$redo = "N"
 
 # remove dead tree and stem information 
 data.2023 = data.2023[which(data.2023$live == "L"),]
-data.2023 = data.2023[-which(data.2023$dbh == "<2.5"), -which(colnames(data.2023) %in% c("live","stem.count","notes"))]
-data.2023$dbh = as.numeric(data.2023$dbh)
-data.2023$basal.area = pi*(data.2023$dbh/100/2)^2
+data.2023 = data.2023[-which(data.2023$dbh.cm == "<2.5"), 
+                      -which(colnames(data.2023) %in% c("live","stem.count","notes"))]
+data.2023$dbh.cm = as.numeric(data.2023$dbh.cm)
+data.2023$basal.area.m2 = pi*(data.2023$dbh.cm/cm.per.m/2)^2 # m^2
 data.2023$year = 2023
 data.2023 = data.2023 %>% separate(spp, into = c("genus", "species"), sep = " ", remove=F)
 
-# combine 2013 & 2022 DBH data into one dataframe
-new.cols = c("year","plot","spp","dbh","basal.area")
-dbh.all = rbind(data.2013[,new.cols], data.2022[,new.cols])
-dbh.all$redo = "N"
-
-## read in allometric equation matrices
+# read in allometric equation matrices
 allo.df1 = read.csv("Tree_Databases/Jenkins2004.csv", header=T); rownames(allo.df1) = allo.df1$spp
 allo.df2 = read.csv("Tree_Databases/Chojnacky2014.csv", header=T); rownames(allo.df2) = allo.df2$spp
 
 # add columns for genus and species
-uni.spp = sort(unique(dbh.all$spp))
+uni.spp = sort(unique(data.2022$spp))
 n.sp = length(uni.spp)
-dbh.all$genus = dbh.all$spp
-dbh.all$species = dbh.all$spp
+data.2022$genus = data.2022$spp
+data.2022$species = data.2022$spp
 for (sp in uni.spp) {
-  sp.ind1 = which(dbh.all$spp == sp)
+  sp.ind1 = which(data.2022$spp == sp)
   sp.ind2 = which(allo.df1$spp == sp)
-  dbh.all[sp.ind1, c("genus","species")] = allo.df1[sp.ind2, c("genus","species")]
+  data.2022[sp.ind1, c("genus","species")] = allo.df1[sp.ind2, c("genus","species")]
 }
 
-# add treatment and plot number columns to 2023 data and combined 2013/2022 data
-dbh.all = dbh.all %>% separate(plot, into = c("trt", "num"), sep = 1, remove=F)
-data.2023 = data.2023 %>% separate(plot, into = c("trt", "num"), sep = 1, remove=F)
+# split treatment_plot columns
+data.2022 = data.2022 %>% separate(treatment_plot, into = c("treatment","plot"), sep = 1, remove=T)
+data.2023 = data.2023 %>% separate(treatment_plot, into = c("treatment","plot"), sep = 1, remove=T)
 
 # add columns for full treatment name
-dbh.all$trt.full = rep(0, nrow(dbh.all))
-data.2023$trt.full = rep(0, nrow(data.2023))
-for (i in 1:6) { dbh.all$trt.full[which(dbh.all$trt == trts[i])] = trt.names[i] }
-for (i in 1:6) { data.2023$trt.full[which(data.2023$trt == trts[i])] = trt.names[i] }
+data.2022$full.treatment.name = rep(0, nrow(data.2022))
+data.2023$full.treatment.name = rep(0, nrow(data.2023))
+for (i in 1:n.t) { data.2022$full.treatment.name[which(data.2022$treatment == trt.letters[i])] = trt.names[i] }
+for (i in 1:n.t) { data.2023$full.treatment.name[which(data.2023$treatment == trt.letters[i])] = trt.names[i] }
 
-# combine 2023 data with 2013/2022 data
-order.cols = c("redo","year","plot","trt","trt.full","num","spp","genus","species","dbh","basal.area")
-dbh.all = rbind(dbh.all[,order.cols], data.2023[,order.cols])
+# combine 2022 and 2023 data
+order.cols = c("year","redo","treatment","full.treatment.name","plot",
+               "spp","genus","species","dbh.cm","basal.area.m2")
+dbh.cm.all = rbind(data.2022[,order.cols], data.2023[,order.cols])
 
 # replace full names with abbreviations
 names = c("Acer saccharinum","Fraxinus pennsylvanica","Morus alba","Platanus occidentalis","Quercus bicolor")
 abbrs = c("Acesai","Fraxpen","Moralb","Plaocc","Quebic")
 for (i in 1:length(names)) {
-  name.id = which(dbh.all$spp == names[i])
-  dbh.all$spp[name.id] = abbrs[i]
+  name.id = which(dbh.cm.all$spp == names[i])
+  dbh.cm.all$spp[name.id] = abbrs[i]
 }
 
-# write DBH data to file
-write.csv(dbh.all, "Clean_Data/DBH_Data_Clean_2023.csv", row.names=F)
+# write dbh.cm data to file
+write.csv(dbh.cm.all, "Clean_Data_By_Species/DBH_Data_Clean_2022_2023.csv", row.names=F)

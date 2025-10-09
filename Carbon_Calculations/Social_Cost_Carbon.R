@@ -6,25 +6,34 @@ library(reshape2)
 library(patchwork)
 library(dplyr)
 
-# read in social cost of carbon estimates 
+### script that uses social cost of carbon to estimate absolute and relative 
+### carbon benefits of each treatment
+
+# treatment names
+trts = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
+
+## read in datasets
+
+# social cost of carbon estimates 
 scc.df = read.csv("Carbon_Calculations/SCC_Estimates.csv")
 colnames(scc.df) = c("stat","per.CO2","per.CO2.C")
 scc.df$stat = c("mean","lower","upper")
 rownames(scc.df) = c("mean","lower","upper")
 
-# read in establishment costs
+# establishment costs
 est.df = read.csv("Carbon_Calculations/Treatment_Establishment_Costs.csv")
 colnames(est.df) = c("trt","cost.2019","cost.2025")
 
-# read in ecosystem carbon estimates
+# ecosystem carbon estimates
 stock.df = read.csv("Tree_Analysis/Posteriors/CarbonRichness_Means_Intervals_5Chains.csv")
 sort(unique(stock.df$var))
 ecoC.df = stock.df[which(stock.df$var == "Total ecosystem"),c("trt","mean","X5","X95")]
 colnames(ecoC.df) = c("trt","mean","lower","upper")
 
+## combine datasets to estimate carbon benefit
+
 # melt ecosystem carbon estimates by statistic
-ecoC.df.melt = melt(ecoC.df, id.vars=c("trt"), 
-                    variable.name="stat",value.name="stock")
+ecoC.df.melt = melt(ecoC.df, id.vars=c("trt"), variable.name="stat",value.name="stock")
 
 # estimate carbon benefit of each treatment
 ecoC.df.melt$carbon.benefit = rep(0, nrow(ecoC.df.melt))
@@ -34,9 +43,6 @@ for (i in 1:3) {
   stat.id = which(ecoC.df.melt$stat == stat.i)
   ecoC.df.melt$carbon.benefit[stat.id] = ecoC.df.melt$stock[stat.id]*scc.df[stat.i,"per.CO2.C"]
 }
-
-# treatment names
-trts = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
 
 # estimate net benefit of each treatment by subtracting the establishment cost
 ecoC.df.melt$net.benefit = rep(0, nrow(ecoC.df.melt))
@@ -57,7 +63,7 @@ n.df.melt = melt(n.df, id.vars=c("trt"), variable.name="stat",value.name="richne
 # join richness estimates 
 ecoC.n.df.join = left_join(ecoC.df.melt, n.df.melt, by=c("trt","stat"))
 
-# plot net carbon benefit v. richness'
+# plot net carbon benefit v. richness
 mean.df = ecoC.n.df.join[which(ecoC.n.df.join$stat == "mean"),]
 scc.df$stat = c("Mean","Lower (5%)","Upper (95%)")
 colnames(scc.df)[1] = "Social Cost of Carbon Estimate"
@@ -67,8 +73,6 @@ p1 = ggplot(data=mean.df,
             geom_point(size=4) + 
             guides(color="none") + 
             scale_y_continuous(breaks=seq(7,21,by=2),limits=c(7,21)) +
-            #scale_x_continuous(breaks=seq(100,200,by=25),
-            #                   limits=c(90,200)) +
             labs(x="Ecosystem carbon stock (Mg/ha)",
                  y="Total species richness") +
             theme(text=element_text(size=14))
