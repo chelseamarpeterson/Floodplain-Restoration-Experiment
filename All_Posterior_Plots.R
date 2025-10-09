@@ -209,13 +209,19 @@ bg.df$posterior.mean/(bg.df$posterior.mean+abg.df$posterior.mean)*100
 
 # debris plot
 stack.vars.d.old = c("Herbaceous litter","Fine woody debris (< 2.5 cm)",
-    `                "Fine woody debris (2.5-7.5 cm)","Coarse woody debris (\u2265 7.6 cm)",
+                     "Fine woody debris (2.5-7.5 cm)","Coarse woody debris (>= 7.6 cm)",
+                     "Dead stems (< 2.5 cm)","Standing dead trees (>= 2.5 cm)")
+stack.vars.d.new = c("Herbaceous litter","Fine woody debris (< 2.5 cm)",
+                     "Fine woody debris (2.5-7.5 cm)","Coarse woody debris (\u2265 7.6 cm)",
                      "Dead stems (< 2.5 cm)","Standing dead trees (\u2265 2.5 cm)")
 ipcc.vars.d = c("Restored temperate forest","Natural temperate forest")
-p.d = ggplot(stock.df[which(stock.df$variable.label %in% stack.vars.d),], 
+stock.df.debris = stock.df[which(stock.df$variable.label %in% stack.vars.d.old),]
+stock.df.debris$label.new = rep(0, nrow(stock.df.debris))
+for (i in 1:6) { stock.df.debris$label.new[which(stock.df.debris$variable.label == stack.vars.d.old[i])] = stack.vars.d.new [i] }
+p.d = ggplot(stock.df.debris, 
              aes(y=factor(treatment, levels=trt.names),
                  x=posterior.mean, 
-                 fill=factor(variable.label, levels=stack.vars.d))) +
+                 fill=factor(label.new, levels=stack.vars.d.new))) +
              geom_bar(stat="identity",position="stack") + 
              labs(fill="",y="",
                   x="Posterior mean stock (Mg C/ha)",title="") + 
@@ -246,12 +252,13 @@ p.d = ggplot(stock.df[which(stock.df$variable.label %in% stack.vars.d),],
 p.d
 
 # total ecosystem
-stack.vars.e = c("TIC","SOC","Total dead vegetation","Total live vegetation")
+stack.vars.e = c("Soil inorganic carbon","Soil organic carbon","Total dead vegetation","Total live vegetation")
 ipcc.vars.e = c("Restored forested wetland","Natural forested wetland")
 p.e = ggplot(stock.df[which(stock.df$variable.label %in% stack.vars.e),], 
              aes(y=factor(treatment, levels=trt.names),
                  x=posterior.mean,  
-                 fill=factor(var, levels=stack.vars.e))) +
+                 fill=factor(variable.label, 
+                             levels=stack.vars.e))) +
             geom_bar(stat="identity",position="stack") + 
             labs(fill="",y="",
                  x="Posterior mean stock (Mg C/ha)",title="") +
@@ -265,7 +272,8 @@ p.e = ggplot(stock.df[which(stock.df$variable.label %in% stack.vars.e),],
             scale_fill_manual(values=c(brewer.pal(9,"Greys")[5],
                                        s.palette[3],d.palette[4],
                                        v.palette[3]),
-                              labels=c("TIC","SOC",
+                              labels=c("TIC",
+                                       "SOC",
                                        "Litter and woody debris",
                                        "Living biomass")) +
             scale_color_manual(values=c("red","royalblue1")) +
@@ -287,11 +295,14 @@ p.e = ggplot(stock.df[which(stock.df$variable.label %in% stack.vars.e),],
 p.e
 
 # richness plot
-stack.vars.r = c("Total richness","Herbaceous species","Tree species")
+stack.vars.r = c("Total richness","Herbaceous layer richness","Tree layer richness")
 stack.vars.new = c("Herbaceous layer only","Tree layer only","Tree and herbaceous layer")
-df.sp = stock.df[which(stock.df$var %in% stack.vars.r),]
-df.sp.wide = pivot_wider(df.sp, id_cols=treatment, names_from=var, values_from=mean)
-df.sp.wide$`Tree and herbaceous layer` = df.sp.wide$`Tree species` + df.sp.wide$`Herbaceous species` - df.sp.wide$`Total richness`
+df.sp = stock.df[which(stock.df$variable.label %in% stack.vars.r),]
+df.sp.wide = pivot_wider(df.sp, 
+                         id_cols=treatment, 
+                         names_from=variable.label, 
+                         values_from=posterior.mean)
+df.sp.wide$`Tree and herbaceous layer` = df.sp.wide$`Herbaceous layer richness` + df.sp.wide$`Tree layer richness` - df.sp.wide$`Total richness`
 df.sp.new = df.sp.wide[,-which(colnames(df.sp.wide) == "Total richness")]
 colnames(df.sp.new) = c("treatment",stack.vars.new)
 df.sp.melt = melt(df.sp.new, id.vars=c("treatment"))
@@ -328,7 +339,7 @@ ggsave("Figures/Figure6_Veg_Ecosystem_Cstocks_Richness.jpeg",
 # and herbaceous layer species
 
 # read in posterior intervals
-post.df.spp = read.csv("Tree_Analysis/Posteriors/VegetationCarbonStocks_Species_Means_Intervals_5Chains.csv")
+post.df.spp = read.csv("Tree_Analysis/Posteriors/Vegetation_Carbon_Stocks_Species_Means_Intervals_5Chains.csv")
 
 # plot stacked means for live woody, snag/CWD area, and biomass stocks by species
 type.rows = c("live.trees","dead.trees","coarse.woody.debris")
@@ -338,12 +349,12 @@ type.labs = c("Live trees (\u2265 2.5 cm)",
 post.df.woodC = post.df.spp[which(post.df.spp$type %in% type.rows),]
 post.df.woodC$type.lab = rep(0, nrow(post.df.woodC))
 for (i in 1:3) { post.df.woodC$type.lab[which(post.df.woodC$type == type.rows[i])] = type.labs[i] }
-post.df.woodC$spp = trimws(post.df.woodC$spp)
-all.sp = sort(unique(post.df.woodC$spp))
+post.df.woodC$species = trimws(post.df.woodC$species)
+all.sp = sort(unique(post.df.woodC$species))
 p.woodyC = ggplot(post.df.woodC, 
-                  aes(x=mean, 
-                      y=factor(trt, levels=trt.names),
-                      fill=factor(spp, levels=all.sp))) + 
+                  aes(x=posterior.mean, 
+                      y=factor(treatment, levels=trt.names),
+                      fill=factor(species, levels=all.sp))) + 
                   geom_bar(stat="identity") +
                   facet_wrap(.~factor(type.lab, levels=type.labs), 
                              scales="free_x", ncol=1) +
@@ -356,11 +367,11 @@ ggsave("Figures/FigureB1_Woody_C_Stocks_By_Species.jpeg",
 
 # plot stacked means for herbaceous species grounds
 post.df.herbC = post.df.spp[which(post.df.spp$type == "herbaceous.biomass"),]
-spp.herbC = levels(factor(post.df.herbC$spp))
+spp.herbC = levels(factor(post.df.herbC$species))
 p.herbC = ggplot(post.df.herbC, 
-                 aes(x=mean,
-                     y=factor(trt, levels=trt.names), 
-                     fill=factor(spp, levels=spp.herbC))) + 
+                 aes(x=posterior.mean,
+                     y=factor(treatment, levels=trt.names), 
+                     fill=factor(species, levels=spp.herbC))) + 
                  geom_bar(stat = "identity") + 
                  labs(y="", x="Posterior mean C stock (Mg/ha)", 
                       title = "",
