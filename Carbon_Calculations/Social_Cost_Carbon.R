@@ -25,9 +25,10 @@ est.df = read.csv("Carbon_Calculations/Treatment_Establishment_Costs.csv")
 colnames(est.df) = c("trt","cost.2019","cost.2025")
 
 # ecosystem carbon estimates
-stock.df = read.csv("Tree_Analysis/Posteriors/CarbonRichness_Means_Intervals_5Chains.csv")
-sort(unique(stock.df$var))
-ecoC.df = stock.df[which(stock.df$var == "Total ecosystem"),c("trt","mean","X5","X95")]
+stock.df = read.csv("Tree_Analysis/Posteriors/Carbon_Stocks_Richness_Means_Intervals_5Chains.csv")
+sort(unique(stock.df$variable.label))
+ecoC.df = stock.df[which(stock.df$variable.label == "Total ecosystem"),
+                   c("treatment","posterior.mean","X5","X95")]
 colnames(ecoC.df) = c("trt","mean","lower","upper")
 
 ## combine datasets to estimate carbon benefit
@@ -56,7 +57,8 @@ for (i in 1:6) {
 }
 
 # get species richness estimates
-n.df = stock.df[which(stock.df$var == "Total richness"),c("trt","mean","X5","X95")]
+n.df = stock.df[which(stock.df$variable.label == "Total richness"),
+                c("treatment","posterior.mean","X5","X95")]
 colnames(n.df) = c("trt","mean","lower","upper")
 n.df.melt = melt(n.df, id.vars=c("trt"), variable.name="stat",value.name="richness")
 
@@ -124,40 +126,19 @@ for (i in 1:length(cols)) {
     trt = mean.df$trt[j]
     if (cols[i] == "stock") {
       print(paste(trt, ": ", 
-                  round(mean.df[j,cols[i]]), " (", 
-                  round(l.df[j,cols[i]]), "-", 
-                  round(u.df[j,cols[i]]), ")", sep="")) 
-      print(paste(trt, ": ", 
-                  round(mean.df[j,cols[i]],1), " (", 
-                  round(l.df[j,cols[i]],1), "-", 
-                  round(u.df[j,cols[i]],1), ")", sep="")) 
-    } else if (cols[i] == "richness") {
-      print(paste(trt, ": ", 
-                  round(mean.df[j,cols[i]],1), " (", 
-                  round(l.df[j,cols[i]],1), "-", 
-                  round(u.df[j,cols[i]],1), ")", sep=""))      
-      print(paste(trt, ": ", 
-                  round(mean.df[j,cols[i]],2), " (", 
-                  round(l.df[j,cols[i]],2), "-", 
-                  round(u.df[j,cols[i]],2), ")", sep=""))
+                  signif(mean.df[j,cols[i]],3), " (", 
+                  signif(l.df[j,cols[i]],3), "-", 
+                  signif(u.df[j,cols[i]],3), ")", sep="")) 
     } else if (cols[i] %in% c("carbon.benefit","net.benefit")) {
       print(paste(trt, ": ", 
-                  round(mean.df[j,cols[i]]/1000), " (", 
-                  round(l.df[j,cols[i]]/1000), "-", 
-                  round(u.df[j,cols[i]]/1000), ")", sep=""))
-      print(paste(trt, ": ", 
-                  round(mean.df[j,cols[i]]/1000,1), " (", 
-                  round(l.df[j,cols[i]]/1000,1), "-", 
-                  round(u.df[j,cols[i]]/1000,1), ")", sep=""))  
+                  signif(mean.df[j,cols[i]]/1000,3), " (", 
+                  signif(l.df[j,cols[i]]/1000,3), "-", 
+                  signif(u.df[j,cols[i]]/1000,3), ")", sep=""))
     } else {
       print(paste(trt, ": ", 
-                  round(mean.df[j,cols[i]]), " (", 
-                  round(l.df[j,cols[i]]), "-", 
-                  round(u.df[j,cols[i]]), ")", sep=""))
-      print(paste(trt, ": ", 
-                  round(mean.df[j,cols[i]],1), " (", 
-                  round(l.df[j,cols[i]],1), "-", 
-                  round(u.df[j,cols[i]],1), ")", sep=""))
+                  signif(mean.df[j,cols[i]],3), " (", 
+                  signif(l.df[j,cols[i]],3), "-", 
+                  signif(u.df[j,cols[i]],3), ")", sep=""))
     }
   }
 }

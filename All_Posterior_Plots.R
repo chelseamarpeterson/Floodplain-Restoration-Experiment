@@ -205,7 +205,7 @@ p.l = ggplot(stock.df[which(stock.df$variable.label %in% stack.vars.l),],
 p.l
 abg.df = stock.df[which(stock.df$variable.label == "Aboveground woody biomass"),]
 bg.df = stock.df[which(stock.df$variable.label == "Belowground woody biomass"),]
-bg.df$posterior.mean/(bg.df$posterior.mean+abg.df$posterior.mean)*100
+round(bg.df$posterior.mean/(bg.df$posterior.mean+abg.df$posterior.mean)*100,1)
 
 # debris plot
 stack.vars.d.old = c("Herbaceous litter","Fine woody debris (< 2.5 cm)",
