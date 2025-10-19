@@ -1,4 +1,4 @@
-path_to_repo = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Chapter2/Floodplain-Experiment-Repo"
+path_to_repo = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch2_Floodplain_Experiment/Floodplain-Experiment-Repo"
 setwd(path_to_repo)
 
 library(tidyr)
@@ -26,7 +26,7 @@ cwd.density.decay.class3 = 0.26 # g/cm^3
 snag.C.content.decay.class3 = 0.48 #% for standing angiosperms
 snag.density.decay.class3 = 0.35 #g/cm3 for standing species
 min.snag.height.ft = 4.5 # ft
-med.fwd.diam.cm = 1.25 # cm
+med.stem.diam.cm = 1.25 # cm
 med.fwd.diam.cm = 5 # cm
 
 # plot dimensions 
@@ -259,7 +259,7 @@ snag.sum = snag.sum[treatment.sort$ix,]
 snag.counts = snag.data[which(snag.data$dbh == "<2.5"),]
 snag.counts = snag.counts[,-which(colnames(snag.counts) %in% c("redo","live","dbh.cm","notes"))]
 snag.counts$dead.stem.count = snag.counts$stem.count / plot.area.ha # count/ha
-snag.counts$dead.stem.volmin = snag.counts$dead.stem.count * pi * ((med.fwd.diam.cm/cm.per.m)^2) * (min.snag.height.ft/ft.per.m) # m3/ha
+snag.counts$dead.stem.volmin = snag.counts$dead.stem.count * pi * ((med.stem.diam.cm/cm.per.m)^2) * (min.snag.height.ft/ft.per.m) # m3/ha
 
 # calculate dead stem C storage
 snag.counts$taxon.c.content = rep(0, nrow(snag.counts))
@@ -393,7 +393,7 @@ all.stem.data$abg = get_biomass(dbh = rep(med.fwd.diam.cm, nrow(all.stem.data)),
 all.stem.data$abg.ha = all.stem.data$abg / plot.area.ha # Mg/ha
 
 # get root ratios from Chojnacky and estimate belowground biomass
-all.stem.data$r = exp(allo.df[1,"cr.b0"] + allo.df[1,"cr.b1"]*log(med.fwd.diam.cm)) # ratio = exp(b0 + b1*log(dbh [cm]))
+all.stem.data$r = exp(allo.df[1,"cr.b0"] + allo.df[1,"cr.b1"]*log(med.stem.diam.cm)) # ratio = exp(b0 + b1*log(dbh [cm]))
 all.stem.data$bg.ha = all.stem.data$abg.ha * all.stem.data$r # Mg/ha
 
 # identify corresponding C density for each species
