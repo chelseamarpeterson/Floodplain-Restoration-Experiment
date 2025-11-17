@@ -20,16 +20,117 @@ trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","R
 n.t = length(trt.letters)
 
 # read posterior distributions for soil properties, carbon stocks, and species richness
-soil.df = read.csv("Soil_Analysis/Posteriors/All_Soil_Posterior_Intervals_ChainCount5.csv")
+soil.df = read.csv("Soil_Analysis/Posteriors/Soil_Posterior_Intervals_ChainCount5_BRMS.csv")
 stock.df = read.csv("Tree_Analysis/Posteriors/Carbon_Stocks_Richness_Means_Intervals_5Chains.csv")
 
-# soil variable labels
-soil.vars = unique(soil.df$variable)
-soil.var.labs = unique(soil.df$variable.label)
+# variable labels
+soil.var.df = read.csv("Soil_Analysis/Clean_Data/quadrat.variable.metadata.csv")
+soil.vars = soil.var.df[,"variable"][1:32]
+soil.var.labs = soil.var.df[,"label"][1:32]
+n.s.v = length(soil.vars)
 
 # stock and richness variables
 stock.vars = unique(stock.df$variable)
 stock.var.labs = unique(stock.df$variable.label)
+
+################################################################################
+# model comparisons
+
+# read in soil data model comparison dataframe
+comp.df = read.csv("Soil_Analysis/Posteriors/Soil_Model_Information_Criteria.csv")
+
+# read in rhat statistic dataframe
+rhat.df = read.csv("Soil_Analysis/Posteriors/Soil_Rhat_Statistic.csv")
+
+# model names
+model.labels = c("Fixed effects only","Plot random effects","Strip and plot random effects")
+models = c("simple","plot.random","strip.plot.random")
+n.m = length(models)
+
+# criteria names
+criteria = c("WAIC","LOO")
+n.c = length(criteria)
+
+# count the number of variables for which each model type minimizes the loo v. waic
+min.ic.count.df = data.frame(matrix(nrow=n.c,ncol=n.m))
+colnames(min.ic.count.df) = model.labels
+row.names(min.ic.count.df) = criteria
+for (i in 1:n.c) {
+  criterion.i = criteria[i]
+  min.ic.count.df[i,] = rep(0,3)
+  for (j in 1:n.s.v) {
+    var.j = soil.vars[j]
+    row.ij.ind = which(comp.df$variable == var.j & comp.df$criterion == criterion.i)
+    row.ij = comp.df[row.ij.ind,]
+    min.ic.model = row.ij[which.min(row.ij$ic), "model.label"]
+    min.ic.count.df[i,min.ic.model] = min.ic.count.df[i,min.ic.model] + 1
+  }
+}
+
+# compare two models with random effects
+random.effect.comp.df = data.frame(matrix(nrow=n.s.v,ncol=n.c))
+colnames(random.effect.comp.df) = criteria
+row.names(random.effect.comp.df) = soil.vars
+for (i in 1:n.c) {
+  criterion.i = criteria[i]
+  for (j in 1:n.s.v) {
+    var.j = soil.vars[j]
+    row.ij.ind = which(comp.df$variable == var.j & comp.df$criterion == criterion.i)
+    row.ij = comp.df[row.ij.ind,]
+    strip.plot.id = which(row.ij$model.label == "Strip and plot random effects")
+    plot.id = which(row.ij$model.label == "Plot random effects")
+    if (strip.plot.id < plot.id) {
+      random.effect.comp.df[j,criterion.i] = 2
+    } else if (plot.id < strip.plot.id) {
+      random.effect.comp.df[j,criterion.i] = 1
+    }
+  }
+}
+sum(random.effect.comp.df$WAIC == 1)
+sum(random.effect.comp.df$LOO == 1)
+
+# add model label column then plot
+p.soil.ic.score.comp = ggplot(comp.df, 
+                              aes(x=ic, y=factor(model.label, levels=model.labels), 
+                              color=criterion,
+                              linetype=criterion,
+                              shape=factor(best.model))) + 
+                              geom_point(position=position_dodge(0.5)) + 
+                              geom_errorbarh(aes(xmin=ic-se_ic, xmax=ic+se_ic,
+                                                 y=factor(model.label, levels=model.labels), 
+                                                 color=criterion,
+                                                 linetype=criterion),
+                                             position=position_dodge(0.5), height=0.2) +
+                              facet_wrap(.~factor(variable.label,levels=soil.var.labs), 
+                                         ncol=4, scales="free_x") + 
+                              theme(text = element_text(size=12)) + 
+                              labs(y="", x="Score",color="Information criterion",
+                                  , linetype="Information criterion",shape="Best model")
+ggsave("Figures/FigureB1_Soil_IC_Score_Comparison.jpeg", 
+       plot=p.soil.ic.score.comp, width=28, height=32, units="cm",dpi=600)
+
+# plot posterior HDIs for all soil variables and models
+p.soil.hdi.comp = ggplot(soil.df, 
+                         aes(y=factor(full.treatment.name, levels=trt.names),
+                             x=exp(posterior.mean)*variable.mean,
+                             color=factor(model.label, levels=model.labels),
+                             shape=factor(model.label, levels=model.labels))) +
+                         geom_point(position=position_dodge(0.6),size=0.85) +
+                         geom_errorbarh(aes(xmin=exp(`X5`)*variable.mean,
+                                            xmax=exp(`X95`)*variable.mean,
+                                            y=factor(full.treatment.name, levels=trt.names),
+                                            color=factor(model.label, levels=model.labels)),
+                                        position=position_dodge(0.6),height=0.4,linewidth=0.2) +
+                         geom_errorbarh(aes(xmin=exp(`X25`)*variable.mean,
+                                            xmax=exp(`X75`)*variable.mean,
+                                            y=factor(full.treatment.name, levels=trt.names),
+                                            color=factor(model.label, levels=model.labels)),
+                                         position=position_dodge(0.6),height=0,linewidth=0.5) +
+                         facet_wrap(.~factor(variable.label, levels=soil.var.labs),
+                                    ncol=4, scales="free_x") + 
+                         labs(y="", x="Posterior estimate", color="Model", shape="Model")
+ggsave("Figures/FigureB2_Soil_IC_Score_Comparison.jpeg", 
+       plot=p.soil.hdi.comp, width=28, height=32, units="cm",dpi=600)
 
 ################################################################################
 # print results for appendix tables

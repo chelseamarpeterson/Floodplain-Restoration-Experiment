@@ -100,5 +100,17 @@ total.sp.df$n.tree = as.integer(total.sp.df$n.tree)
 total.sp.df$n.total = as.integer(total.sp.df$n.total)
 c.sp.data = right_join(c.data, total.sp.df, by=c("treatment","plot"))
 
+# add column for treatment strip
+trt.strip.plt.df = read.csv("Treatments_Strips_Plots.csv")
+colnames(trt.strip.plt.df) = tolower(colnames(trt.strip.plt.df))
+c.sp.data = left_join(c.sp.data,
+                      trt.strip.plt.df,
+                      by=c("treatment","plot"))
+
+# re-order columns
+id.cols = c("treatment","full.treatment.name","strip","plot")
+var.cols = colnames(c.sp.data)[4:38]
+c.sp.data = c.sp.data[,c(id.cols,var.cols)]
+
 # write data to file
 write.csv(c.sp.data, "Tree_Analysis/Clean_Data_By_Plot/Clean_Veg_Soil_C_Stocks_Richness_by_Plot.csv", row.names=F)

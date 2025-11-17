@@ -1,4 +1,4 @@
-path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch2_Floodplain_Experiment/Floodplain-Experiment-Repo/Soil_Analysis"
+path_to_soil_folder = "C:/Users/Chels/OneDrive - University of Illinois - Urbana/Ch2_Floodplain_Experiment/Floodplain-Experiment-Repo"
 setwd(path_to_soil_folder)
 
 library(tidyr)
@@ -18,12 +18,12 @@ trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","R
 n.t = length(trt.letters)
 
 # read in all soil data
-temp.data = read.csv("Raw_Data/Soil_Temperature_June2023.csv")[,seq(1,6)]
-bd.data = read.csv("Raw_Data/Bulk_Density_June2023.csv")
-chem.data = read.csv("Raw_Data/Waypoint_Results_June2023.csv")
-cn.data = read.csv("Raw_Data/TC_TOC_Results_2025.csv")
-pom.data = read.csv("Raw_Data/POM_Results_2025.csv")
-quad.data = read.csv("Raw_Data/Quadrat_GIS_Data_PolygonMean_WGS1984Aux_2020Lidar.csv")
+temp.data = read.csv("Soil_Analysis/Raw_Data/Soil_Temperature_June2023.csv")[,seq(1,6)]
+bd.data = read.csv("Soil_Analysis/Raw_Data/Bulk_Density_June2023.csv")
+chem.data = read.csv("Soil_Analysis/Raw_Data/Waypoint_Results_June2023.csv")
+cn.data = read.csv("Soil_Analysis/Raw_Data/TC_TOC_Results_2025.csv")
+pom.data = read.csv("Soil_Analysis/Raw_Data/POM_Results_2025.csv")
+quad.data = read.csv("Soil_Analysis/Raw_Data/Quadrat_GIS_Data_PolygonMean_WGS1984Aux_2020Lidar.csv")
 
 # split plot name column
 bd.data = bd.data %>% separate(Treatment_Plot, c("Treatment","Plot"), sep = 1, remove = T)
@@ -74,10 +74,18 @@ pom.ave = pom.data[,c("Treatment","Plot","Quadrat","Rep","poc.percent","pom.mass
 temp.data$full.treatment.name = rep(0, nrow(temp.data))
 for (i in 1:n.t) { temp.data$full.treatment.name[which(temp.data$Treatment == trt.letters[i])] = trt.names[i] }
 
-# combine all bulk density, moisture, temperature, C/N, vegetation height, elevation, and other chemical data
+# add column for treatment strip
+trt.strip.plt.df = read.csv("Treatments_Strips_Plots.csv")
+trt.strip.plt.df$Plot = as.character(trt.strip.plt.df$Plot)
 temp.data$Plot = as.character(temp.data$Plot)
+soil.data = left_join(temp.data[,c("full.treatment.name","Treatment","Plot","Quadrat","temperature")],
+                      trt.strip.plt.df,
+                      by=c("Treatment","Plot"))
+soil.data = soil.data[,c("full.treatment.name","Treatment","Strip","Plot","Quadrat","temperature")]
+
+# combine all bulk density, moisture, temperature, C/N, vegetation height, elevation, and other chemical data
 quad.data$Plot = as.character(quad.data$Plot)
-soil.data = left_join(temp.data[,c("full.treatment.name","Treatment","Plot","Quadrat","temperature")], 
+soil.data = left_join(soil.data, 
                       bd.sum, 
                       by=c("Treatment","Plot","Quadrat"))
 soil.data = left_join(soil.data, 
@@ -97,7 +105,7 @@ soil.data = left_join(soil.data,
 ## clean up aggregate data 
 
 # load mass data
-ag.data = read.csv("Raw_Data/Aggregate_Masses_2023.csv")
+ag.data = read.csv("Soil_Analysis/Raw_Data/Aggregate_Masses_2023.csv")
 
 # update columns
 key.cols = c("Size.class","Treatment_Plot_Quadrat","Mass.of.sample.w.o.fragments..g.")
@@ -185,5 +193,5 @@ soil.data$moc.percent = pmax(soil.data$toc.percent - soil.data$poc.percent, 0)
 soil.data$poc.moc.ratio = soil.data$poc.percent/soil.data$moc.percent
 
 # write all soil data at quadrat level to csv
-write.csv(soil.data, "Clean_Data/Soil_Data_by_Quadrat_June2023.csv", row.names=F)
+write.csv(soil.data, "Soil_Analysis/Clean_Data/Soil_Data_by_Quadrat_June2023.csv", row.names=F)
 

@@ -8,6 +8,7 @@ library(reshape2)
 library(ggplot2)
 library(rethinking)
 library(allodb)
+library(brms)
 
 # treatment names
 trt.letters = c("A","B","C","D","E","R")
@@ -25,84 +26,164 @@ vars = read.csv("Tree_Analysis/Clean_Data_By_Plot/carbon.richness.metadata.csv")
 var.labels = read.csv("Tree_Analysis/Clean_Data_By_Plot/carbon.richness.metadata.csv", stringsAsFactors=F)[,"label"]
 n.v = length(vars)
 
-# convert treatments into indices
-stock.richness.df$tid = as.numeric(factor(stock.richness.df$treatment))
-
 # make simplified data lists
-all.df = list()
+all.lists = list()
 all.mean = list()
 all.sd = list()
 for (i in 1:n.v) {
   v = vars[i]
   all.mean[[v]] = mean(stock.richness.df[,v])
   all.sd[[v]] = sd(stock.richness.df[,v])
-  all.df[[v]] = list(tid = stock.richness.df$tid, y = stock.richness.df[,v]/all.mean[[v]])
+  all.lists[[v]] = list(treatment = factor(stock.richness.df$treatment), 
+                        strip = factor(stock.richness.df$strip), 
+                        plot = factor(stock.richness.df$plot),
+                        y = stock.richness.df[,v]/all.mean[[v]])
+  hist(all.lists[[v]]$y)
 }
 
 # fit simple models
-set.seed(2718)
-m.all = list()
-for (i in 1:n.v) {
-  v = vars[i]
-  m.all[[v]] = ulam(alist(y ~ dnorm(mu, sigma),
-                          log(mu) <- a[tid],
-                          a[tid] ~ dnorm(0, 1),
-                          sigma ~ dexp(1)),
-                    data = all.df[[v]], chains=5)
-}
-
-# MCMC checks
-for (i in 1:n.v) { traceplot(m.all[[vars[i]]]) }
-for (i in 1:n.v) { trankplot(m.all[[vars[i]]]) }
-
-# extract posterior samples and create dataframes
-all.samples = list()
-all.a = list()
-a.df = data.frame(matrix(nrow=0, ncol=7))
-colnames(a.df) = c("variable",trt.letters)
-for (i in 1:n.v) {
-  v = vars[i]
-  
-  # store posterior samples in lists
-  all.samples[[v]] = extract.samples(m.all[[v]])
-  all.a[[v]] = exp(all.samples[[v]]$a) * all.mean[[v]]
-  
-  # add a's to dataframe
-  a.row = data.frame(all.a[[v]])
-  colnames(a.row) = trt.letters
-  a.row$variable = v
-  a.df = rbind(a.df, a.row[,c("variable",trt.letters)])
-}
-
-
-# create df with means and HPDIs by treatment and species
-post.df = data.frame(matrix(nrow=n.v*n.t, ncol=10))
-colnames(post.df) = c("treatment","variable","variable.label","variable.mean",
-                      "posterior.mean","posterior.sd","5","95","25","75")
-k = 1
-for (j in 1:n.v) {
-  for (i in 1:n.t) {
-    v = vars[j]
-    a.v = all.a[[v]]
-    a.hpdi.90 = HPDI(a.v[,i], prob=0.90)
-    post.df[k,"treatment"] = trt.names[i]
-    post.df[k,"variable"] = v
-    post.df[k,"variable.label"] = var.labels[j]
-    post.df[k,"variable.mean"] = all.mean[[v]]
-    post.df[k,"posterior.mean"] = mean(a.v[,i], 2)
-    post.df[k,"posterior.sd"] = sd(a.v[,i], 2)
-    post.df[k,"5"] = a.hpdi.90[1]
-    post.df[k,"95"] = a.hpdi.90[2]
-    post.df[k,"25"] = a.hpdi.50[1]
-    post.df[k,"75"] = a.hpdi.50[2]
-    k = k + 1
+seed = 3141; n.iter=5000; n.chain=5
+stock.model.list = list()
+models = c("simple","plot.random","strip.plot.random")
+model.labels = c("Fixed effects only","Plot random effects","Strip and plot random effects")
+n.m = length(models)
+for (i in 2:2) {
+  v.i = vars[i]
+  stock.model.list[[v.i]] = list()
+  for (j in 2:2) {
+    m.j = models[j]
+    if (m.j == "simple") {
+      model.fit.ij = brm(data = all.lists[[v.i]], 
+                         y ~ treatment,
+                         family=gaussian(link="log"),
+                         prior=prior(normal(0,1), class=b),
+                         chains=10, seed=seed, iter=10000,
+                         control = list(adapt_delta = 0.99,
+                                        max_treedepth = 12))
+    } else if (m.j == "plot.random") {
+      model.fit.ij = brm(data = all.lists[[v.i]], 
+                         y ~ treatment + (1|treatment:plot),
+                         family=gaussian(link="log"),
+                         prior=prior(normal(0,2), class=b),
+                         chains=10, seed=seed, iter=10000,
+                         control = list(adapt_delta = 0.99,
+                                        max_treedepth = 12))
+    l;6} else if (m.j == "strip.plot.random") {
+      model.fit.ij = brm(data = all.lists[[v.i]], 
+                         y ~ treatment + (1|treatment:strip) + (1|treatment:strip:plot),
+                         family=gaussian(link="log"),
+                         prior=prior(normal(0,2), class=b),
+                         chains=10, seed=seed, iter=10000,
+                         control = list(adapt_delta = 0.99,
+                                        max_treedepth = 12))
+    }
+    model.fit.ij = add_criterion(model.fit.ij,"loo")
+    model.fit.ij = add_criterion(model.fit.ij,"waic")
+    stock.model.list[[v.i]][[m.j]] = model.fit.ij
   }
 }
 
-# write posterior HPDIs and means to file
-write.csv(post.df,
-          "Tree_Analysis/Posteriors/Carbon_Stocks_Richness_Means_Intervals_5Chains.csv",
-          row.names=F)
+summary(model.fit.ij)
+rhat(model.fit.ij)
+
+
+# save Rhat statistic for each variable and model
+#rhat.df = data.frame(matrix(nrow=0,ncol=7))
+colnames(rhat.df) = c("variable","variable.label",
+                      "model","model.label",
+                      "treatment","full.treatment.name","Rhat")
+#for (i in 1:n.v) {
+for (i in 1:1) {
+  v.i = vars[i]
+  for (j in 1:n.m) {
+    m.j = models[j]
+    model.sum.ij = summary(stock.model.list[[v.i]][[m.j]])
+    model.df.ij = data.frame(matrix(nrow=6,ncol=7))
+    colnames(model.df.ij) = c("variable","variable.label",
+                              "model","model.label",
+                              "treatment","full.treatment.name","Rhat")
+    model.df.ij$variable = v.i
+    model.df.ij$variable.label = var.labels[i]
+    model.df.ij$model = m.j
+    model.df.ij$model.label = model.labels[j]
+    model.df.ij$treatment = trt.letters
+    model.df.ij$full.treatment.name = trt.names
+    model.df.ij$Rhat = model.sum.ij$fixed$Rhat
+    rhat.df = rbind(rhat.df, model.df.ij)
+  }
+}
+rhat.df$model.label = rep(0, nrow(rhat.df))
+for (i in 1:n.m) { rhat.df$model.label[which(rhat.df$model == models[i])] = model.labels[i] }
+#write.csv(rhat.df, "Tree_Analysis/Posteriors/Stock_Rhat_Statistic.csv", row.names=F)
+
+# compare models for each variale with WAIC, LOO, and kfold
+criteria = c("waic","loo")
+criteria.labels = c("WAIC","LOO")
+n.c = length(criteria)
+comp.df = data.frame(matrix(nrow=0, ncol=13))
+colnames(comp.df) = c("elpd_diff","se_diff","elpd","se_elpd","p","se_p","ic","se_ic",
+                      "variable","variable.label","criterion","model","best.model")
+for (i in 1:n.v) {
+  v.i = vars[i]
+  for (j in 1:n.c) {
+    m1 = stock.model.list[[v.i]][[models[1]]]
+    m2 = stock.model.list[[v.i]][[models[2]]]
+    m3 = stock.model.list[[v.i]][[models[3]]]
+    comp.ij = data.frame(loo_compare(m1, m2, m3, criterion = criteria[j],
+                                     model_names=models))
+    colnames(comp.ij) = c("elpd_diff","se_diff","elpd","se_elpd","p","se_p","ic","se_ic")
+    comp.ij$variable = v.i
+    comp.ij$variable.label = var.labels[i]
+    comp.ij$criterion = criteria.labels[j]
+    comp.ij$model = row.names(comp.ij)
+    comp.ij$best.model = c(1,0,0)
+    comp.df = rbind(comp.df, comp.ij)
+  }
+}
+
+# write information criterion comparisons to file
+comp.df$model.label = rep(0, nrow(comp.df))
+for (i in 1:n.m) { comp.df$model.label[which(comp.df$model == models[i])] = model.labels[i] }
+comp.df$best.model = c("No","Yes")[comp.df$best.model + 1]
+write.csv(comp.df, "Tree_Analysis/Posteriors/Stock_Model_Information_Criteria.csv", row.names=F)
+
+# get posterior intervals and write to file
+df.int = data.frame(matrix(nrow=0, ncol=13))
+int.cols = c("model","model.label",
+             "variable","variable.label","variable.mean",
+             "treatment","full.treatment.name",
+             "posterior.mean","posterior.se",
+             "5","95","25","75")
+colnames(df.int) = int.cols
+for (i in 1:n.v) {
+  v.i = vars[i]
+  for (j in 1:n.m) {
+    m.j = models[j]
+    fit.ij = stock.model.list[[v.i]][[m.j]]
+    df.ij = data.frame(matrix(nrow=n.t, ncol=13))
+    colnames(df.ij) = int.cols
+    v = vars[i]
+    hdi.90 = hdi(fit.ij, ci=0.90)
+    hdi.50 = hdi(fit.ij, ci=0.50)
+    df.ij$model = models[j]
+    df.ij$model.label = model.labels[j]
+    df.ij$variable = v.i
+    df.ij$variable.label = var.labels[i]
+    df.ij$variable.mean = all.means[[v]]
+    df.ij$treatment = trt.letters
+    df.ij$full.treatment.name = trt.names
+    df.ij$posterior.mean = fixef(fit.ij)[,"Estimate"]
+    df.ij$posterior.se = fixef(fit.ij)[,"Est.Error"]
+    df.ij[1:n.t,"5"] = hdi.90[,"CI_low"]
+    df.ij[1:n.t,"95"] = hdi.90[,"CI_high"]
+    df.ij[1:n.t,"25"] = hdi.50[,"CI_low"]
+    df.ij[1:n.t,"75"] = hdi.50[,"CI_high"]
+    df.int = rbind(df.int, df.ij)
+  }
+}
+df.int$model.label = rep(0, nrow(df.int))
+for (i in 1:n.m) { df.int$model.label[which(df.int$model == models[i])] = model.labels[i] }
+write.csv(df.int, "Tree_Analysis/Posteriors/Carbon_Stocks_Richness_Means_Intervals_5Chains_BRMS.csv", row.names=F)
 
 ################################################################################
 ### statistical analyses on carbon stock data by species
