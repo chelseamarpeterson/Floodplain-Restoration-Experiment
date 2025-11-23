@@ -10,10 +10,11 @@ library(rethinking)
 library(allodb)
 library(brms)
 
-# treatment names
-trt.letters = c("A","B","C","D","E","R")
-trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
-n.t = length(trt.letters)
+# treatments
+trt.df = read.csv("Metadata/Treatment_Letters_Names.csv")
+trt.letters = trt.df[,"Treatment.letters"]
+trt.names = trt.df[,"Treatment.names"]
+n.t = nrow(trt.df)
 
 ################################################################################
 ## statistical analyses on live and dead C stock components by plot
@@ -25,6 +26,13 @@ stock.richness.df = read.csv("Tree_Analysis/Clean_Data_By_Plot/Clean_Veg_Soil_C_
 vars = read.csv("Tree_Analysis/Clean_Data_By_Plot/carbon.richness.metadata.csv")[,"variable"]
 var.labels = read.csv("Tree_Analysis/Clean_Data_By_Plot/carbon.richness.metadata.csv", stringsAsFactors=F)[,"label"]
 n.v = length(vars)
+
+# melt stock richness dataframe
+stock.richness.melt = melt(stock.richness.df, 
+                           id.vars=c("treatment","full.treatment.name","strip","plot"))
+ggplot(stock.richness.melt, aes(x=value)) + 
+       geom_histogram() +
+       facet_wrap(.~variable, scales="free_x")
 
 # make simplified data lists
 all.lists = list()
@@ -38,41 +46,34 @@ for (i in 1:n.v) {
                         strip = factor(stock.richness.df$strip), 
                         plot = factor(stock.richness.df$plot),
                         y = stock.richness.df[,v]/all.mean[[v]])
-  hist(all.lists[[v]]$y)
+  #hist(stock.richness.df[,v]/all.mean[[v]], main=v)
+  hist(all.lists[[v]]$y, main=v, xlim=c(0,6))
 }
 
 # fit simple models
 seed = 3141; n.iter=5000; n.chain=5
 stock.model.list = list()
-models = c("simple","plot.random","strip.plot.random")
-model.labels = c("Fixed effects only","Plot random effects","Strip and plot random effects")
+models = c("simple","strip.random")
+model.labels = c("Fixed effects only","Strip random effects")
 n.m = length(models)
-for (i in 2:2) {
+for (i in 1:n.v) {
   v.i = vars[i]
   stock.model.list[[v.i]] = list()
-  for (j in 2:2) {
+  for (j in 1:n.m) {
     m.j = models[j]
     if (m.j == "simple") {
       model.fit.ij = brm(data = all.lists[[v.i]], 
-                         y ~ treatment,
+                                y ~ treatment,
+                                family = gaussian(link="log"),
+                                prior=prior(normal(0,1), class=b),
+                                chains=10, seed=seed, iter=10000,
+                                control = list(adapt_delta = 0.99,
+                                               max_treedepth = 12))
+    } else if (m.j == "strip.random") {
+      model.fit.ij = brm(data = all.lists[[v.i]], 
+                         y ~ treatment + (1|treatment:strip),
                          family=gaussian(link="log"),
                          prior=prior(normal(0,1), class=b),
-                         chains=10, seed=seed, iter=10000,
-                         control = list(adapt_delta = 0.99,
-                                        max_treedepth = 12))
-    } else if (m.j == "plot.random") {
-      model.fit.ij = brm(data = all.lists[[v.i]], 
-                         y ~ treatment + (1|treatment:plot),
-                         family=gaussian(link="log"),
-                         prior=prior(normal(0,2), class=b),
-                         chains=10, seed=seed, iter=10000,
-                         control = list(adapt_delta = 0.99,
-                                        max_treedepth = 12))
-    l;6} else if (m.j == "strip.plot.random") {
-      model.fit.ij = brm(data = all.lists[[v.i]], 
-                         y ~ treatment + (1|treatment:strip) + (1|treatment:strip:plot),
-                         family=gaussian(link="log"),
-                         prior=prior(normal(0,2), class=b),
                          chains=10, seed=seed, iter=10000,
                          control = list(adapt_delta = 0.99,
                                         max_treedepth = 12))
@@ -83,17 +84,24 @@ for (i in 2:2) {
   }
 }
 
-summary(model.fit.ij)
-rhat(model.fit.ij)
 
+#get_prior(model.fit.ij)
+#model.fit.simple = add_criterion(model.fit.simple,"loo")
+#model.fit.plot.random = add_criterion(model.fit.plot.random,"loo")
+#model.fit.strip.random = add_criterion(model.fit.strip.random,"loo")
+#loo_compare(model.fit.simple, model.fit.plot.random, model.fit.strip.random, criterion = "loo")
+#round(summary(model.fit.simple)$fixed$Estimate,2)
+#round(summary(model.fit.plot.random)$fixed$Estimate,2)
+#round(summary(model.fit.strip.random)$fixed$Estimate,2)
+#rhat(model.fit.simple)
+#rhat(model.fit.strip.random)
 
 # save Rhat statistic for each variable and model
-#rhat.df = data.frame(matrix(nrow=0,ncol=7))
+rhat.df = data.frame(matrix(nrow=0,ncol=7))
 colnames(rhat.df) = c("variable","variable.label",
                       "model","model.label",
                       "treatment","full.treatment.name","Rhat")
-#for (i in 1:n.v) {
-for (i in 1:1) {
+for (i in 1:n.v) {
   v.i = vars[i]
   for (j in 1:n.m) {
     m.j = models[j]
@@ -114,7 +122,7 @@ for (i in 1:1) {
 }
 rhat.df$model.label = rep(0, nrow(rhat.df))
 for (i in 1:n.m) { rhat.df$model.label[which(rhat.df$model == models[i])] = model.labels[i] }
-#write.csv(rhat.df, "Tree_Analysis/Posteriors/Stock_Rhat_Statistic.csv", row.names=F)
+write.csv(rhat.df, "Tree_Analysis/Posteriors/Stock_Rhat_Statistic.csv", row.names=F)
 
 # compare models for each variale with WAIC, LOO, and kfold
 criteria = c("waic","loo")
@@ -128,15 +136,13 @@ for (i in 1:n.v) {
   for (j in 1:n.c) {
     m1 = stock.model.list[[v.i]][[models[1]]]
     m2 = stock.model.list[[v.i]][[models[2]]]
-    m3 = stock.model.list[[v.i]][[models[3]]]
-    comp.ij = data.frame(loo_compare(m1, m2, m3, criterion = criteria[j],
-                                     model_names=models))
+    comp.ij = data.frame(loo_compare(m1, m2, criterion = criteria[j], model_names=models))
     colnames(comp.ij) = c("elpd_diff","se_diff","elpd","se_elpd","p","se_p","ic","se_ic")
     comp.ij$variable = v.i
     comp.ij$variable.label = var.labels[i]
     comp.ij$criterion = criteria.labels[j]
     comp.ij$model = row.names(comp.ij)
-    comp.ij$best.model = c(1,0,0)
+    comp.ij$best.model = c(1,0)
     comp.df = rbind(comp.df, comp.ij)
   }
 }
@@ -146,13 +152,16 @@ comp.df$model.label = rep(0, nrow(comp.df))
 for (i in 1:n.m) { comp.df$model.label[which(comp.df$model == models[i])] = model.labels[i] }
 comp.df$best.model = c("No","Yes")[comp.df$best.model + 1]
 write.csv(comp.df, "Tree_Analysis/Posteriors/Stock_Model_Information_Criteria.csv", row.names=F)
-
+waic.df = comp.df[which(comp.df$criterion == "WAIC"),]
+loo.df = comp.df[which(comp.df$criterion == "LOO"),]
+sum(waic.df$best.model == "Yes" & waic.df$model.label == "Strip random effects")
+sum(waic.df$best.model == "Yes" & waic.df$model.label == "Fixed effects only")
+sum(loo.df$best.model == "Yes" & loo.df$model.label == "Strip random effects")
+sum(loo.df$best.model == "Yes" & loo.df$model.label == "Fixed effects only")
 # get posterior intervals and write to file
 df.int = data.frame(matrix(nrow=0, ncol=13))
-int.cols = c("model","model.label",
-             "variable","variable.label","variable.mean",
-             "treatment","full.treatment.name",
-             "posterior.mean","posterior.se",
+int.cols = c("model","model.label","variable","variable.label","variable.mean",
+             "treatment","full.treatment.name","posterior.mean","posterior.se",
              "5","95","25","75")
 colnames(df.int) = int.cols
 for (i in 1:n.v) {

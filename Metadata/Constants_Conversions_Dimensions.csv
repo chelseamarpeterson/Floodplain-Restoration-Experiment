@@ -1,0 +1,25 @@
+Type,Name,Value,Unit,Description or rationale,Reference
+conversion,ft.per.m,3.28084,ft/m,Imperial to SI units,
+conversion,cm.per.in,2.54,cm/in,Imperial to SI units,
+conversion,m.per.km,1000,m/km,Scale adjustment factor,
+conversion,cm.per.m,100,cm/m,Scale adjustment factor,
+conversion,m2.per.ha,10000,m2/ha,Scale adjustment factor,
+conversion,kg.per.Mg,1000,kg/Mg,Scale adjustment factor,
+constant,live.tree.C.content,0.48,%,Average stem tissue C concentration of 48.0% for temperate deciduous forests,Table 4.3 in IPCC. 2006. 2006 IPCC Guidelines for National Greenhouse Gas Inventories. ISBN 4-88788-032-4. Institute for Global Environmental Strategies.
+constant,fwd.C.content,0.484,%,Averaged from measured C concentration of small fine woody debris (<2.5 cm),Estimated this study
+constant,C1,21.1659,none,Constant in equation for coarse and fine woody debris volume to get estimate in metric units (m3/ha),"Equations (1) and (5) in Woodall, Christopher W., Vicente J. Monleon, Shawn Fraver, et al. 2019. “The Downed and Dead Wood Inventory of Forests in the United States.” Scientific Data 6 (1): 1. https://doi.org/10.1038/sdata.2018.303."
+constant,cwd.C.content,0.481,%,Carbon concentration of downed angiosperms in decay class 3,"Table 3 in Harmon, Mark E., Becky Fasth, Christopher W. Woodall, and Jay Sexton. 2013. “Carbon Concentration of Standing and Downed Woody Detritus: Effects of Tree Taxa, Decay Class, Position, and Tissue Type.” Forest Ecology and Management 291: 259–67. https://doi.org/10.1016/j.foreco.2012.11.046. https://doi.org/10.1016/j.foreco.2012.11.046."
+constant,cwd.wood.density,0.26,g/cm3,Wood density of downed angiosperms in decay class 3,"Table 4 in Harmon, Mark E., Christopher W. Woodall, Becky Fasth, Jay Sexton, and Misha. Yatkov. 2011. Differences between Standing and Downed Dead Tree Wood Density Reduction Factors: A Comparison across Decay Classes and Tree Species. NRS-RP-15. U.S. Department of Agriculture, Forest Service, Northern Research Station. https://doi.org/10.2737/NRS-RP-15."
+constant,snag.C.content,0.48,%,Carbon concentration of standing dead angiosperms in decay class 3,"Table 3 in Harmon, Mark E., Becky Fasth, Christopher W. Woodall, and Jay Sexton. 2013. “Carbon Concentration of Standing and Downed Woody Detritus: Effects of Tree Taxa, Decay Class, Position, and Tissue Type.” Forest Ecology and Management 291: 259–67. https://doi.org/10.1016/j.foreco.2012.11.046.67. https://doi.org/10.1016/j.foreco.2012.11.046."
+constant,snag.wood.density,0.35,g/cm3,Wood density of standing dead angiosperms in decay class 3,"Table 4 in Harmon, Mark E., Christopher W. Woodall, Becky Fasth, Jay Sexton, and Misha. Yatkov. 2011. Differences between Standing and Downed Dead Tree Wood Density Reduction Factors: A Comparison across Decay Classes and Tree Species. NRS-RP-15. U.S. Department of Agriculture, Forest Service, Northern Research Station. https://doi.org/10.2737/NRS-RP-15."
+constant,min.snag.height.ft,4.5,ft,"Breast height, which is the minimum height threshold for recording standing dead tree diameters (>= 2.5 cm) and stem counts (<2.5 cm)",
+constant,median.stem.diameter.cm,1.25,cm,Median diameter of potential range for all stem counts (<2.5 cm),
+constant,median.int.fwd.diameter.cm,5,cm,"Median diameter of potential range for all intermediate fine woody debris counts (>=2.5 cm, <7.6 cm)",
+study.design,plot.length.m,48,m,Woody plot length in SI units,
+study.design,plot.width.m,12,m,Woody plot width in SI units,
+study.design,plot.area.m2,576,m2,Woody plot area in SI units,
+study.design,plot.area.ha,0.0576,ha,Woody plot area in standard unit for carbon stocks (hectares),
+study.design,plot.length.ft,157.48032,ft,"Woody plot length in imperial units, which is needed for the coarse and fine woody debris volume calculations",
+study.design,auger.depth,30,cm,Depth of auger sample taken from each 1-m2 quadrat,
+study.design,longitude,-90.1835,degrees west,Experimental site location (longitude) using WGS1984 coordinate system,
+study.design,latitude,41.5542,degrees north,Experimental site location (latitude) using WGS1984 coordinate system,

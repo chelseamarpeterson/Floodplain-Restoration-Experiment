@@ -7,15 +7,16 @@ library(reshape2)
 library(tidyverse)
 
 ### script that brings together all files with quadrat-level soil data into
-### one clean dataframe and averages quadrat level SOC stock data
+### one clean dataframe
 
 ################################################################################
 ## data upload and preparation
 
 # treatments
-trt.letters = c("A","B","C","D","E","R")
-trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
-n.t = length(trt.letters)
+trt.df = read.csv("Metadata/Treatment_Letters_Names.csv")
+trt.letters = trt.df[,"Treatment.letters"]
+trt.names = trt.df[,"Treatment.names"]
+n.t = nrow(trt.df)
 
 # read in all soil data
 temp.data = read.csv("Soil_Analysis/Raw_Data/Soil_Temperature_June2023.csv")[,seq(1,6)]
@@ -24,6 +25,7 @@ chem.data = read.csv("Soil_Analysis/Raw_Data/Waypoint_Results_June2023.csv")
 cn.data = read.csv("Soil_Analysis/Raw_Data/TC_TOC_Results_2025.csv")
 pom.data = read.csv("Soil_Analysis/Raw_Data/POM_Results_2025.csv")
 quad.data = read.csv("Soil_Analysis/Raw_Data/Quadrat_GIS_Data_PolygonMean_WGS1984Aux_2020Lidar.csv")
+ag.data = read.csv("Soil_Analysis/Raw_Data/Aggregate_Masses_2023.csv")
 
 # split plot name column
 bd.data = bd.data %>% separate(Treatment_Plot, c("Treatment","Plot"), sep = 1, remove = T)
@@ -57,13 +59,11 @@ bd.sum = bd.data %>%
          group_by(Treatment, Plot, Quadrat) %>%
          summarise(mass.water = sum(`Mass.of.water..g.`),
                    sum.soil = sum(`Mass.of.dry.soil..g.`),
-                   sum.vol = sum(`Corrected.volume..cm3.`),
-                   mass.coarse = sum(`Mass.of.coarse.roots.rocks..g.`))
+                   sum.vol = sum(`Corrected.volume..cm3.`))
 bd.sum$gravimetric.moisture = bd.sum$mass.water/bd.sum$sum.soil
 bd.sum$volumetric.moisture = bd.sum$mass.water/bd.sum$sum.vol
 bd.sum$bulk.density = bd.sum$sum.soil/bd.sum$sum.vol
-bd.sum$coarse.material = bd.sum$mass.coarse
-bd.sum = bd.sum[,-which(colnames(bd.sum) %in% c("mass.water","sum.soil","sum.vol","mass.coarse"))]
+bd.sum = bd.sum[,-which(colnames(bd.sum) %in% c("mass.water","sum.soil","sum.vol"))]
 
 # average the POM reps
 pom.ave = pom.data[,c("Treatment","Plot","Quadrat","Rep","poc.percent","pom.mass")] %>%
@@ -75,7 +75,7 @@ temp.data$full.treatment.name = rep(0, nrow(temp.data))
 for (i in 1:n.t) { temp.data$full.treatment.name[which(temp.data$Treatment == trt.letters[i])] = trt.names[i] }
 
 # add column for treatment strip
-trt.strip.plt.df = read.csv("Treatments_Strips_Plots.csv")
+trt.strip.plt.df = read.csv("Metadata/Treatments_Strips_Plots.csv")
 trt.strip.plt.df$Plot = as.character(trt.strip.plt.df$Plot)
 temp.data$Plot = as.character(temp.data$Plot)
 soil.data = left_join(temp.data[,c("full.treatment.name","Treatment","Plot","Quadrat","temperature")],
@@ -103,9 +103,6 @@ soil.data = left_join(soil.data,
 
 ################################################################################
 ## clean up aggregate data 
-
-# load mass data
-ag.data = read.csv("Soil_Analysis/Raw_Data/Aggregate_Masses_2023.csv")
 
 # update columns
 key.cols = c("Size.class","Treatment_Plot_Quadrat","Mass.of.sample.w.o.fragments..g.")
@@ -172,9 +169,9 @@ ag.wide = pivot_wider(ag.new,id_cols = c(treatment, plot, quadrat),
                       names_from = size.lab, values_from = rel.mass)
 
 # compute mean weight diameter from aggregate size distribution
-sizes = c(0.053, 0.250, 2, 4.75, 8)
-mean.diams = (sizes[2:5]-sizes[1:4])/2 + sizes[1:4]
-ag.wide$MWD = (mean.diams[1]*ag.wide$g53um + mean.diams[2]*ag.wide$g250um + mean.diams[3]*ag.wide$g2mm + mean.diams[4]*ag.wide$g475mm)/100
+sizes = c(0, 0.053, 0.250, 2, 4.75, 8)
+mean.diams = (sizes[2:6]-sizes[1:5])/2 + sizes[1:5]
+ag.wide$MWD = (mean.diams[1]*ag.wide$l53um + mean.diams[2]*ag.wide$g53um + mean.diams[3]*ag.wide$g250um + mean.diams[4]*ag.wide$g2mm + mean.diams[5]*ag.wide$g475mm)/100
 
 # add aggregate data to soil dataframe
 colnames(soil.data) = tolower(colnames(soil.data))
@@ -184,13 +181,16 @@ soil.data = right_join(soil.data, ag.wide, by=c("treatment","plot","quadrat"))
 ################################################################################
 ## final quadrat-level data cleaning and writing to file
 
-# calculate inorganic and mineral-associated organic c
+# calculate inorganic and mineral-associated organic c percents
 soil.data$bulk.c.percent = pmax(soil.data$bulk.c.percent, soil.data$toc.percent)
 soil.data$tic.percent = soil.data$bulk.c.percent - soil.data$toc.percent
-soil.data$moc.percent = pmax(soil.data$toc.percent - soil.data$poc.percent, 0)
+soil.data$maoc.percent = soil.data$toc.percent - soil.data$poc.percent
 
-# calculate POC:MOC ratio
-soil.data$poc.moc.ratio = soil.data$poc.percent/soil.data$moc.percent
+# calculate POC:MAOC ratio
+soil.data$poc.maoc.ratio = soil.data$poc.percent/soil.data$maoc.percent
+
+# scale moisture to percentage
+soil.data$gravimetric.moisture = soil.data$gravimetric.moisture * 100
 
 # write all soil data at quadrat level to csv
 write.csv(soil.data, "Soil_Analysis/Clean_Data/Soil_Data_by_Quadrat_June2023.csv", row.names=F)

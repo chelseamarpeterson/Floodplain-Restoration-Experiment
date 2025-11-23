@@ -12,44 +12,63 @@ library(ggtext)
 library(scales)
 
 ################################################################################
-# define treatment and variable names, then load datasets 
+# load metadata
 
-# treatment names
-trt.letters = c("A","B","C","D","E","R")
-trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
-n.t = length(trt.letters)
+# treatments
+trt.df = read.csv("Metadata/Treatment_Letters_Names.csv")
+trt.letters = trt.df[,"Treatment.letters"]
+trt.names = trt.df[,"Treatment.names"]
+n.t = nrow(trt.df)
+
+# model names
+models = c("simple","strip.random","strip.plot.random")
+model.labels = c("Fixed effects only","Strip random effects","Strip and plot random effects")
+n.m = length(models)
+
+# criteria names
+criteria = c("WAIC","LOO")
+n.c = length(criteria)
 
 # read posterior distributions for soil properties, carbon stocks, and species richness
 soil.df = read.csv("Soil_Analysis/Posteriors/Soil_Posterior_Intervals_ChainCount5_BRMS.csv")
 stock.df = read.csv("Tree_Analysis/Posteriors/Carbon_Stocks_Richness_Means_Intervals_5Chains.csv")
 
 # variable labels
-soil.var.df = read.csv("Soil_Analysis/Clean_Data/quadrat.variable.metadata.csv")
+soil.var.df = read.csv("Metadata/Quadrat_Level_Soil_Variables.csv")
 soil.vars = soil.var.df[,"variable"][1:32]
 soil.var.labs = soil.var.df[,"label"][1:32]
 n.s.v = length(soil.vars)
 
 # stock and richness variables
-stock.vars = unique(stock.df$variable)
-stock.var.labs = unique(stock.df$variable.label)
+#stock.vars = unique(stock.df$variable)
+#stock.var.labs = unique(stock.df$variable.label)
+
+################################################################################
+# model convergence evaluation
+
+# read in rhat statistic dataframe
+soil.rhat.df = read.csv("Soil_Analysis/Posteriors/Soil_Rhat_Statistic.csv")
+
+# plot rhat's for each model and variable
+p.soil.rhat.comp = ggplot(soil.rhat.df, aes(x=(Rhat-1)*100, 
+                                            y=factor(full.treatment.name, levels=trt.names),
+                                            color=factor(model.label, levels=model.labels),
+                                            shape=factor(model.label, levels=model.labels))) + 
+                          geom_vline(xintercept=0) +     
+                          geom_point() + 
+                          scale_shape_discrete(solid = F) +
+                          labs(y="",x="(R-hat statistic - 1)*100",
+                               color="Model",shape="Model") +
+                          geom_vline(xintercept=1) +
+                          scale_x_continuous(breaks=seq(0,1,0.2),limits=c(-0.01,1)) + 
+                          facet_wrap(.~factor(variable.label, levels=soil.var.labs), ncol=4)
+p.soil.rhat.comp
 
 ################################################################################
 # model comparisons
 
 # read in soil data model comparison dataframe
 comp.df = read.csv("Soil_Analysis/Posteriors/Soil_Model_Information_Criteria.csv")
-
-# read in rhat statistic dataframe
-rhat.df = read.csv("Soil_Analysis/Posteriors/Soil_Rhat_Statistic.csv")
-
-# model names
-model.labels = c("Fixed effects only","Plot random effects","Strip and plot random effects")
-models = c("simple","plot.random","strip.plot.random")
-n.m = length(models)
-
-# criteria names
-criteria = c("WAIC","LOO")
-n.c = length(criteria)
 
 # count the number of variables for which each model type minimizes the loo v. waic
 min.ic.count.df = data.frame(matrix(nrow=n.c,ncol=n.m))
