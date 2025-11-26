@@ -88,9 +88,7 @@ colnames(total.sp.df) = c("treatment","plot","n.herb.only",
                           "n.tree.only","n.both.herb.tree","n.total")
 k = 1
 for (t in 1:n.t) {
-  print(t)
   for (n in 1:n.p) {
-    print(p)
     tree.id = which(tree.C.df$treatment == trt.letters[t] & tree.C.df$plot == plots[n])
     tree.df = tree.C.df[tree.id,]
     tree.sp = sort(unique(tree.df$spp))

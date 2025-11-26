@@ -213,4 +213,4 @@ for (i in 1:n.v) {
 }
 df.int$model.label = rep(0, nrow(df.int))
 for (i in 1:n.m) { df.int$model.label[which(df.int$model == models[i])] = model.labels[i] }
-#write.csv(df.int, "Soil_Analysis/Posteriors/Soil_Posterior_Intervals_ChainCount5_BRMS.csv", row.names=F)
+#write.csv(df.int, "Soil_Analysis/Posteriors/Soil_Posterior_Intervals_10Chains.csv", row.names=F)

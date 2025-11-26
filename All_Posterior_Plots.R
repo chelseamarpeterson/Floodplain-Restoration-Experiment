@@ -30,8 +30,8 @@ criteria = c("WAIC","LOO")
 n.c = length(criteria)
 
 # read posterior distributions for soil properties, carbon stocks, and species richness
-soil.df = read.csv("Soil_Analysis/Posteriors/Soil_Posterior_Intervals_ChainCount5_BRMS.csv")
-stock.df = read.csv("Tree_Analysis/Posteriors/Carbon_Stocks_Richness_Means_Intervals_5Chains.csv")
+soil.hdi.df = read.csv("Soil_Analysis/Posteriors/Soil_Posterior_Intervals_10Chains.csv")
+stock.hdi.df = read.csv("Tree_Analysis/Posteriors/Carbon_Stocks_Richness_Means_Intervals_10Chains.csv")
 
 # variable labels
 soil.var.df = read.csv("Metadata/Quadrat_Level_Soil_Variables.csv")
@@ -40,16 +40,23 @@ soil.var.labs = soil.var.df[,"label"][1:32]
 n.s.v = length(soil.vars)
 
 # stock and richness variables
-#stock.vars = unique(stock.df$variable)
-#stock.var.labs = unique(stock.df$variable.label)
+stock.var.df = read.csv("Metadata/Plot_Level_Carbon_Richness_Variables.csv")
+leave.out = c("small.fwd.carbon","int.fwd.carbon","dead.stem.carbon.min","snag.carbon.min",
+              "abg.live.tree.carbon","bg.live.tree.carbon","total.live.tree.carbon",
+              "abg.live.stem.carbon","bg.live.stem.carbon","total.live.stem.carbon")
+omit.var.id = which(stock.var.df$variable %in% leave.out)
+stock.vars = stock.var.df[-omit.var.id,"variable"]
+stock.var.labs = stock.var.df[-omit.var.id,"label"]
+n.c.v = length(stock.vars)
 
 ################################################################################
-# model convergence evaluation
+# evaluate model convergence
 
-# read in rhat statistic dataframe
+# read in rhat statistic dataframes
 soil.rhat.df = read.csv("Soil_Analysis/Posteriors/Soil_Rhat_Statistic.csv")
+stock.rhat.df = read.csv("Tree_Analysis/Posteriors/Stock_Rhat_Statistic.csv")
 
-# plot rhat's for each model and variable
+# soil: plot rhat's for each model and variable
 p.soil.rhat.comp = ggplot(soil.rhat.df, aes(x=(Rhat-1)*100, 
                                             y=factor(full.treatment.name, levels=trt.names),
                                             color=factor(model.label, levels=model.labels),
@@ -64,82 +71,83 @@ p.soil.rhat.comp = ggplot(soil.rhat.df, aes(x=(Rhat-1)*100,
                           facet_wrap(.~factor(variable.label, levels=soil.var.labs), ncol=4)
 p.soil.rhat.comp
 
+# carbon stocks: plot rhat's for each model and variable
+p.stock.rhat.comp = ggplot(stock.rhat.df, aes(x=(Rhat-1)*100, 
+                                            y=factor(full.treatment.name, levels=trt.names),
+                                            color=factor(model.label, levels=model.labels),
+                                            shape=factor(model.label, levels=model.labels))) + 
+                           geom_vline(xintercept=0) +     
+                           geom_point() + 
+                           scale_shape_discrete(solid = F) +
+                           labs(y="",x="(R-hat statistic - 1)*100",
+                                color="Model",shape="Model") +
+                           geom_vline(xintercept=1) +
+                           scale_x_continuous(breaks=seq(0,1,0.2),limits=c(-0.01,1)) + 
+                           facet_wrap(.~factor(variable.label, levels=stock.var.labs), ncol=4)
+p.stock.rhat.comp
+
 ################################################################################
-# model comparisons
+# compare model information criteria
 
 # read in soil data model comparison dataframe
-comp.df = read.csv("Soil_Analysis/Posteriors/Soil_Model_Information_Criteria.csv")
+comp.df.soil = read.csv("Soil_Analysis/Posteriors/Soil_Model_Information_Criteria.csv")
+comp.df.stocks = read.csv("Tree_Analysis/Posteriors/Stock_Model_Information_Criteria.csv")
 
-# count the number of variables for which each model type minimizes the loo v. waic
-min.ic.count.df = data.frame(matrix(nrow=n.c,ncol=n.m))
-colnames(min.ic.count.df) = model.labels
-row.names(min.ic.count.df) = criteria
-for (i in 1:n.c) {
-  criterion.i = criteria[i]
-  min.ic.count.df[i,] = rep(0,3)
-  for (j in 1:n.s.v) {
-    var.j = soil.vars[j]
-    row.ij.ind = which(comp.df$variable == var.j & comp.df$criterion == criterion.i)
-    row.ij = comp.df[row.ij.ind,]
-    min.ic.model = row.ij[which.min(row.ij$ic), "model.label"]
-    min.ic.count.df[i,min.ic.model] = min.ic.count.df[i,min.ic.model] + 1
-  }
-}
-
-# compare two models with random effects
-random.effect.comp.df = data.frame(matrix(nrow=n.s.v,ncol=n.c))
-colnames(random.effect.comp.df) = criteria
-row.names(random.effect.comp.df) = soil.vars
-for (i in 1:n.c) {
-  criterion.i = criteria[i]
-  for (j in 1:n.s.v) {
-    var.j = soil.vars[j]
-    row.ij.ind = which(comp.df$variable == var.j & comp.df$criterion == criterion.i)
-    row.ij = comp.df[row.ij.ind,]
-    strip.plot.id = which(row.ij$model.label == "Strip and plot random effects")
-    plot.id = which(row.ij$model.label == "Plot random effects")
-    if (strip.plot.id < plot.id) {
-      random.effect.comp.df[j,criterion.i] = 2
-    } else if (plot.id < strip.plot.id) {
-      random.effect.comp.df[j,criterion.i] = 1
-    }
-  }
-}
-sum(random.effect.comp.df$WAIC == 1)
-sum(random.effect.comp.df$LOO == 1)
-
-# add model label column then plot
-p.soil.ic.score.comp = ggplot(comp.df, 
+# soil: plot comparison of information criteria
+p.soil.ic.score.comp = ggplot(comp.df.soil, 
                               aes(x=ic, y=factor(model.label, levels=model.labels), 
-                              color=criterion,
-                              linetype=criterion,
-                              shape=factor(best.model))) + 
+                                  color=criterion,
+                                  linetype=criterion,
+                                  shape=factor(best.model))) + 
                               geom_point(position=position_dodge(0.5)) + 
                               geom_errorbarh(aes(xmin=ic-se_ic, xmax=ic+se_ic,
                                                  y=factor(model.label, levels=model.labels), 
                                                  color=criterion,
                                                  linetype=criterion),
                                              position=position_dodge(0.5), height=0.2) +
-                              facet_wrap(.~factor(variable.label,levels=soil.var.labs), 
+                              facet_wrap(.~factor(variable.label, levels=soil.var.labs), 
                                          ncol=4, scales="free_x") + 
                               theme(text = element_text(size=12)) + 
                               labs(y="", x="Score",color="Information criterion",
-                                  , linetype="Information criterion",shape="Best model")
+                                   linetype="Information criterion",shape="Best model")
 ggsave("Figures/FigureB1_Soil_IC_Score_Comparison.jpeg", 
-       plot=p.soil.ic.score.comp, width=28, height=32, units="cm",dpi=600)
+       plot=p.soil.ic.score.comp, width=30, height=32, units="cm",dpi=600)
 
-# plot posterior HDIs for all soil variables and models
-p.soil.hdi.comp = ggplot(soil.df, 
+# soil: plot comparison of information criteria
+p.stock.ic.score.comp = ggplot(comp.df.stocks, 
+                               aes(x=ic, y=factor(model.label, levels=model.labels), 
+                                   color=criterion,
+                                   linetype=criterion,
+                                   shape=factor(best.model))) + 
+                               geom_point(position=position_dodge(0.5)) + 
+                               geom_errorbarh(aes(xmin=ic-se_ic, xmax=ic+se_ic,
+                                                  y=factor(model.label, levels=model.labels), 
+                                                  color=criterion,
+                                                  linetype=criterion),
+                                              position=position_dodge(0.5), height=0.2) +
+                               facet_wrap(.~factor(variable.label, levels=stock.var.labs), 
+                                          ncol=4, scales="free_x") + 
+                               theme(text = element_text(size=12)) + 
+                               labs(y="", x="Score",color="Information criterion",
+                                    linetype="Information criterion",shape="Best model")
+ggsave("Figures/FigureB2_Stock_IC_Score_Comparison.jpeg", 
+       plot=p.stock.ic.score.comp, width=32, height=32, units="cm",dpi=600)
+
+###############################################################################
+# plot HDIs for each model and variable
+
+# soil: plot posterior HDIs for all soil variables and models
+p.soil.hdi.comp = ggplot(soil.hdi.df, 
                          aes(y=factor(full.treatment.name, levels=trt.names),
                              x=exp(posterior.mean)*variable.mean,
                              color=factor(model.label, levels=model.labels),
                              shape=factor(model.label, levels=model.labels))) +
-                         geom_point(position=position_dodge(0.6),size=0.85) +
+                         geom_point(position=position_dodge(0.6),size=0.9) +
                          geom_errorbarh(aes(xmin=exp(`X5`)*variable.mean,
                                             xmax=exp(`X95`)*variable.mean,
                                             y=factor(full.treatment.name, levels=trt.names),
                                             color=factor(model.label, levels=model.labels)),
-                                        position=position_dodge(0.6),height=0.4,linewidth=0.2) +
+                                        position=position_dodge(0.6),height=0.3,linewidth=0.3) +
                          geom_errorbarh(aes(xmin=exp(`X25`)*variable.mean,
                                             xmax=exp(`X75`)*variable.mean,
                                             y=factor(full.treatment.name, levels=trt.names),
@@ -148,23 +156,65 @@ p.soil.hdi.comp = ggplot(soil.df,
                          facet_wrap(.~factor(variable.label, levels=soil.var.labs),
                                     ncol=4, scales="free_x") + 
                          labs(y="", x="Posterior estimate", color="Model", shape="Model")
-ggsave("Figures/FigureB2_Soil_IC_Score_Comparison.jpeg", 
-       plot=p.soil.hdi.comp, width=28, height=32, units="cm",dpi=600)
+ggsave("Figures/FigureB3_Soil_HDI_Comparison.jpeg", 
+       plot=p.soil.hdi.comp, width=30, height=32, units="cm",dpi=600)
+
+# soil: plot posterior HDIs for all soil variables and models
+p.stock.hdi.comp = ggplot(stock.hdi.df, 
+                          aes(y=factor(full.treatment.name, levels=trt.names),
+                              x=exp(posterior.mean)*variable.mean,
+                              color=factor(model.label, levels=model.labels),
+                              shape=factor(model.label, levels=model.labels))) +
+                          geom_point(position=position_dodge(0.6),size=0.9) +
+                          geom_errorbarh(aes(xmin=exp(`X5`)*variable.mean,
+                                             xmax=exp(`X95`)*variable.mean,
+                                             y=factor(full.treatment.name, levels=trt.names),
+                                             color=factor(model.label, levels=model.labels)),
+                                         position=position_dodge(0.6),height=0.3,linewidth=0.3) +
+                          geom_errorbarh(aes(xmin=exp(`X25`)*variable.mean,
+                                             xmax=exp(`X75`)*variable.mean,
+                                             y=factor(full.treatment.name, levels=trt.names),
+                                             color=factor(model.label, levels=model.labels)),
+                                         position=position_dodge(0.6),height=0,linewidth=0.5) +
+                          facet_wrap(.~factor(variable.label, levels=stock.var.labs),
+                                     ncol=4, scales="free_x") + 
+                          labs(y="", x="Posterior estimate", color="Model", shape="Model")
+ggsave("Figures/FigureB4_Stock_HDI_Comparison.jpeg", 
+       plot=p.stock.hdi.comp, width=32, height=32, units="cm",dpi=600)
 
 ################################################################################
-# print results for appendix tables
+# count the number of variables for which each model type minimizes the loo v. waic
 
-# C stock and richness means and 90% intervals
-for (i in 1:length(stock.vars)) {
-  var.rows = which(stock.df$variable == stock.vars[i])
-  print(cbind(stock.df[var.rows,c("variable","treatment")],
-              signif(stock.df[var.rows,c("posterior.mean","X5","X95")],3)))
+# soil
+soil.min.ic.count.df = data.frame(matrix(nrow=n.c, ncol=n.m))
+colnames(soil.min.ic.count.df) = model.labels
+row.names(soil.min.ic.count.df) = criteria
+for (i in 1:n.c) {
+  criterion.i = criteria[i]
+  soil.min.ic.count.df[i,] = rep(0,3)
+  for (j in 1:n.s.v) {
+    var.j = soil.vars[j]
+    row.ij.ind = which(comp.df.soil$variable == var.j & comp.df.soil$criterion == criterion.i)
+    row.ij = comp.df.soil[row.ij.ind,]
+    min.ic.model = row.ij[which.min(row.ij$ic), "model.label"]
+    soil.min.ic.count.df[i,min.ic.model] = soil.min.ic.count.df[i,min.ic.model] + 1
+  }
 }
 
-# soil means and 90% intervals
-for (i in 1:length(soil.vars)) {
-  print(cbind(soil.df[which(soil.df$variable == soil.vars[i]),c("variable","treatment")],
-              signif(soil.df[which(soil.df$variable == soil.vars[i]),c("posterior.mean","X5","X95")],3)))
+# carbon stocks
+stock.min.ic.count.df = data.frame(matrix(nrow=n.c, ncol=2))
+colnames(stock.min.ic.count.df) = model.labels[1:2]
+row.names(stock.min.ic.count.df) = criteria
+for (i in 1:n.c) {
+  criterion.i = criteria[i]
+  stock.min.ic.count.df[i,] = rep(0,2)
+  for (j in 1:n.c.v) {
+    var.j = stock.vars[j]
+    row.ij.ind = which(comp.df.stocks$variable == var.j & comp.df.stocks$criterion == criterion.i)
+    row.ij = comp.df.stocks[row.ij.ind,]
+    min.ic.model = row.ij[which.min(row.ij$ic), "model.label"]
+    stock.min.ic.count.df[i,min.ic.model] = stock.min.ic.count.df[i,min.ic.model] + 1
+  }
 }
 
 ################################################################################
@@ -173,15 +223,19 @@ for (i in 1:length(soil.vars)) {
 # IPCC estimates
 ipcc.df = read.csv("Carbon_Calculations/IPCC_Carbon_Estimates.csv")
 
+# isolate soil data for best model
+soil.hdi.df.best = soil.hdi.df[which(soil.hdi.df$model == "strip.plot.random"),]
+stock.hdi.df.best = stock.hdi.df[which(stock.hdi.df$model == "strip.random"),]
+
 # stacked plot for carbon fractions
-c.conc.labs = c("tic.percent","poc.percent","moc.percent")
-c.conc.labs.new = c("TIC","POC","MOC")
-soil.df$lab = rep(0, nrow(soil.df))
-for (i in 1:3) { soil.df$lab[which(soil.df$variable == c.conc.labs[i])] = c.conc.labs.new[i] }
+c.conc.labs = c("tic.percent","poc.percent","maoc.percent")
+c.conc.labs.new = c("TIC","POC","MAOC")
+soil.hdi.df.best$lab = rep(0, nrow(soil.hdi.df.best))
+for (i in 1:3) { soil.hdi.df.best$lab[which(soil.hdi.df.best$variable == c.conc.labs[i])] = c.conc.labs.new[i] }
 s.palette <- c(brewer.pal(9,"Greys")[5],brewer.pal(11,"BrBG")[c(2,1)])
-p.c.concentrations = ggplot(soil.df[which(soil.df$lab %in% c.conc.labs.new),], 
-                            aes(y=factor(treatment, levels=trt.names), 
-                                x=posterior.mean, 
+p.c.concentrations = ggplot(soil.hdi.df.best[which(soil.hdi.df.best$lab %in% c.conc.labs.new),], 
+                            aes(y=factor(full.treatment.name, levels=trt.names), 
+                                x=exp(posterior.mean)*variable.mean, 
                                 fill=factor(lab, levels=c.conc.labs.new))) + 
                             geom_bar(stat="identity",
                                      position="stack") +
@@ -190,17 +244,18 @@ p.c.concentrations = ggplot(soil.df[which(soil.df$lab %in% c.conc.labs.new),],
                             scale_fill_manual(values=s.palette) +
                             theme(text = element_text(size=14),
                                   plot.margin=unit(c(1,1,1,1),"lines")) +
-                            coord_cartesian(xlim = c(0,4.6), clip="off") +
-                            geom_label(x=5.12,y=6.3,label="a",
+                            coord_cartesian(xlim = c(0,5.5), clip="off") +
+                            scale_x_continuous(breaks=seq(0,5)) +
+                            geom_label(x=5.25,y=1,label="a",
                                        color="black",fill=alpha("white",0.9),
                                        label.r=unit(0,"pt"),label.size=0,
                                        size=8,fontface="bold") + 
                             guides(fill="none")
 p.c.concentrations
 ipcc.soil.vars = c("Annual crops","Revegetated cropland","Natural wetland")
-p.c.stocks = ggplot(stock.df[which(stock.df$variable %in% c.conc.labs.new),], 
-                    aes(y=factor(treatment, levels=trt.names), 
-                        x=posterior.mean, 
+p.c.stocks = ggplot(stock.hdi.df.best[which(stock.hdi.df.best$variable %in% c.conc.labs.new),], 
+                    aes(y=factor(full.treatment.name, levels=trt.names), 
+                        x=exp(posterior.mean)*variable.mean, 
                         fill=factor(variable, levels=c.conc.labs.new))) +
                     geom_bar(stat="identity",position="stack") + 
                     scale_fill_manual(values=s.palette) +
@@ -219,12 +274,13 @@ p.c.stocks = ggplot(stock.df[which(stock.df$variable %in% c.conc.labs.new),],
                           legend.key.size=unit(0.7,'cm'),
                           plot.margin=unit(c(1,1,1,1),"lines"),
                           legend.key=element_rect(fill="darkgrey")) +
-                    coord_cartesian(xlim=c(0,130), clip="off") +
-                    scale_x_continuous(breaks=c(0,30,60,90,120))+
-                    geom_label(x=145.5,y=6.3,label="b",
+                    coord_cartesian(xlim=c(0,143), clip="off") +
+                    scale_x_continuous(breaks=seq(0,125,25))+
+                    geom_label(x=136,y=1,label="b",
                                color="black",fill=alpha("white",0.9),
                                label.r=unit(0,"pt"),label.size=0,
                                size=8,fontface="bold")
+p.c.stocks
 p.c.all = p.c.concentrations + p.c.stocks
 p.c.all =  p.c.all + theme(plot.margin = margin(0, 0, 0, 0, "cm"))
 p.c.all
@@ -234,45 +290,45 @@ ggsave("Figures/Figure3_Soil_Carbon_Concentrations_and_Stocks.jpeg",
 ################################################################################
 # plot non-carbon chemical and physical variables
 
-# plot all variables
-#ggplot(soil.df, aes(y=factor(t, levels=trt.names), 
-#                   x=mean)) + 
-#        geom_errorbarh(aes(xmin=X5, xmax=X95), color="black") +
-#        geom_point() + 
-#        facet_wrap(.~v, scales="free_x",ncol=5)
-
 # plot select variables 
 phys.chem.vars = c("Temperature (C)","Gravitational moisture (%)","Bulk density (g/cm3)",
                    "TN (%)","C:N Ratio","Sand (%)","Silt (%)","Clay (%)",
                    "pH","P (ppm)","NO3-N (ppm)","NH4-N (ppm)",
                    "K (meq/100 g)","Ca (meq/100 g)","Mg (meq/100 g)",
-                   ">=4.75 mm","2-4.75 mm","0.250-2 mm","0.053-0.250 mm","<0.053 mm")
+                   ">= 4.75 mm","2-4.75 mm","0.250-2 mm","0.053-0.250 mm","<0.053 mm")
 phys.chem.labs = c("Temperature (C)","Gravitational moisture (%)","Bulk density (g/cm3)",
                    "TN (%)","C:N ratio","Sand (%)","Silt (%)","Clay (%)",
                    "pH","P (ppm)","NO3-N (ppm)","NH4-N (ppm)",
                    "K (meq/100 g)","Ca (meq/100 g)","Mg (meq/100 g)",
                    "\u2265 4.75 mm (%)","2-4.75 mm (%)","0.250-2 mm (%)",
                    "0.053-0.250 mm (%)","< 0.053 mm (%)")
-df.plot = soil.df[which(soil.df$variable.label %in% phys.chem.vars),]
+df.plot = soil.hdi.df.best[which(soil.hdi.df.best$variable.label %in% phys.chem.vars),]
 df.plot$label.new = rep(0, nrow(df.plot))
 for (i in 1:length(phys.chem.vars)) { df.plot$label.new[which(df.plot$variable.label == phys.chem.vars[i])] = phys.chem.labs[i] }
 p.chem.phys = ggplot(df.plot, 
-                     aes(y=factor(treatment, levels=trt.names), 
-                         x=posterior.mean)) + 
-                     geom_errorbar(aes(xmin=`X5`, xmax=`X95`), 
-                                   width=0.25, color="black", 
-                                   position=position_dodge(width=0.5)) +
-                     geom_point(size=1, position=position_dodge(width=0.5)) +
+                     aes(y=factor(full.treatment.name, levels=trt.names), 
+                         x=exp(posterior.mean)*variable.mean)) + 
+                     geom_errorbar(aes(xmin=exp(`X5`)*variable.mean, 
+                                       xmax=exp(`X95`)*variable.mean), 
+                                   width=0.3, color="black", 
+                                   position=position_dodge(width=0.5),
+                                   linewidth=0.35) +
+                     geom_errorbar(aes(xmin=exp(`X25`)*variable.mean, 
+                                       xmax=exp(`X75`)*variable.mean), 
+                                   width=0, color="black", 
+                                   position=position_dodge(width=0.5),
+                                   linewidth=0.8) +
+                     geom_point(size=1.2, position=position_dodge(width=0.5)) +
                      facet_wrap(.~factor(label.new, 
                                          levels=phys.chem.labs), 
                                 ncol=5, scales="free_x") +
-                     theme(panel.spacing.x = unit(0.4, "cm"),
+                     theme(panel.spacing.x = unit(0.6, "cm"),
                            text = element_text(size=12)) +
                      labs(y="",x="Posterior estimate") + 
-                     scale_x_continuous(breaks = breaks_extended(n = 4)) 
+                     scale_x_continuous(breaks=breaks_extended(n=4))
 p.chem.phys
 ggsave("Figures/Figure4_All_Except_CEC_MWD.jpeg", 
-       plot=p.chem.phys,width=27,height=18,units="cm",dpi=600)
+       plot=p.chem.phys,width=28,height=18,units="cm",dpi=600)
 
 ################################################################################
 # make combined plot for C stocks in biomass, debris, and soil + vegetation,
