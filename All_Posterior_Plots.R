@@ -57,10 +57,11 @@ soil.rhat.df = read.csv("Soil_Analysis/Posteriors/Soil_Rhat_Statistic.csv")
 stock.rhat.df = read.csv("Tree_Analysis/Posteriors/Stock_Rhat_Statistic.csv")
 
 # soil: plot rhat's for each model and variable
-p.soil.rhat.comp = ggplot(soil.rhat.df, aes(x=(Rhat-1)*100, 
-                                            y=factor(full.treatment.name, levels=trt.names),
-                                            color=factor(model.label, levels=model.labels),
-                                            shape=factor(model.label, levels=model.labels))) + 
+p.soil.rhat.comp = ggplot(soil.rhat.df, 
+                          aes(x=(Rhat-1)*100, 
+                              y=factor(full.treatment.name, levels=trt.names),
+                              color=factor(model.label, levels=model.labels),
+                              shape=factor(model.label, levels=model.labels))) + 
                           geom_vline(xintercept=0) +     
                           geom_point() + 
                           scale_shape_discrete(solid = F) +
@@ -72,9 +73,10 @@ p.soil.rhat.comp = ggplot(soil.rhat.df, aes(x=(Rhat-1)*100,
 p.soil.rhat.comp
 
 # carbon stocks: plot rhat's for each model and variable
-p.stock.rhat.comp = ggplot(stock.rhat.df, aes(x=(Rhat-1)*100, 
-                                            y=factor(full.treatment.name, levels=trt.names),
-                                            color=factor(model.label, levels=model.labels),
+p.stock.rhat.comp = ggplot(stock.rhat.df, 
+                           aes(x=(Rhat-1)*100, 
+                               y=factor(full.treatment.name, levels=trt.names),
+                               color=factor(model.label, levels=model.labels),
                                             shape=factor(model.label, levels=model.labels))) + 
                            geom_vline(xintercept=0) +     
                            geom_point() + 
@@ -293,15 +295,12 @@ ggsave("Figures/Figure3_Soil_Carbon_Concentrations_and_Stocks.jpeg",
 # plot select variables 
 phys.chem.vars = c("Temperature (C)","Gravitational moisture (%)","Bulk density (g/cm3)",
                    "TN (%)","C:N Ratio","Sand (%)","Silt (%)","Clay (%)",
-                   "pH","P (ppm)","NO3-N (ppm)","NH4-N (ppm)",
-                   "K (meq/100 g)","Ca (meq/100 g)","Mg (meq/100 g)",
+                   "pH","P (ppm)","NO3-N (ppm)","NH4-N (ppm)","K (ppm)","Ca (ppm)","Mg (ppm)",
                    ">= 4.75 mm","2-4.75 mm","0.250-2 mm","0.053-0.250 mm","<0.053 mm")
 phys.chem.labs = c("Temperature (C)","Gravitational moisture (%)","Bulk density (g/cm3)",
                    "TN (%)","C:N ratio","Sand (%)","Silt (%)","Clay (%)",
-                   "pH","P (ppm)","NO3-N (ppm)","NH4-N (ppm)",
-                   "K (meq/100 g)","Ca (meq/100 g)","Mg (meq/100 g)",
-                   "\u2265 4.75 mm (%)","2-4.75 mm (%)","0.250-2 mm (%)",
-                   "0.053-0.250 mm (%)","< 0.053 mm (%)")
+                   "pH","P (ppm)","NO3-N (ppm)","NH4-N (ppm)","K (ppm)","Ca (ppm)","Mg (ppm)",
+                   "\u2265 4.75 mm (%)","2-4.75 mm (%)","0.250-2 mm (%)","0.053-0.250 mm (%)","< 0.053 mm (%)")
 df.plot = soil.hdi.df.best[which(soil.hdi.df.best$variable.label %in% phys.chem.vars),]
 df.plot$label.new = rep(0, nrow(df.plot))
 for (i in 1:length(phys.chem.vars)) { df.plot$label.new[which(df.plot$variable.label == phys.chem.vars[i])] = phys.chem.labs[i] }
@@ -319,8 +318,7 @@ p.chem.phys = ggplot(df.plot,
                                    position=position_dodge(width=0.5),
                                    linewidth=0.8) +
                      geom_point(size=1.2, position=position_dodge(width=0.5)) +
-                     facet_wrap(.~factor(label.new, 
-                                         levels=phys.chem.labs), 
+                     facet_wrap(.~factor(label.new, levels=phys.chem.labs), 
                                 ncol=5, scales="free_x") +
                      theme(panel.spacing.x = unit(0.6, "cm"),
                            text = element_text(size=12)) +
@@ -347,19 +345,17 @@ stack.vars.l = c("Herbaceous biomass",
                  "Belowground woody biomass",
                  "Aboveground woody biomass")
 ipcc.vars.l = c("Restored temperate forest","Natural temperate forest")
-p.l = ggplot(stock.df[which(stock.df$variable.label %in% stack.vars.l),], 
-             aes(y=factor(treatment, levels=trt.names), 
-                 x=posterior.mean, 
+p.l = ggplot(stock.hdi.df.best[which(stock.hdi.df.best$variable.label %in% stack.vars.l),], 
+             aes(y=factor(full.treatment.name, levels=trt.names), 
+                 x=exp(posterior.mean)*variable.mean, 
                  fill=factor(variable.label, levels=stack.vars.l))) +
               geom_bar(stat="identity",position="stack") + 
               labs(fill="",y="",
                    x="Posterior mean stock (Mg C/ha)",title="") + 
               geom_vline(data=ipcc.df,
                          aes(xintercept=woody.value, 
-                             color=factor(woody.type,
-                                          levels=ipcc.vars.l),
-                             linetype=factor(woody.type,
-                                             levels=ipcc.vars.l)), 
+                             color=factor(woody.type,levels=ipcc.vars.l),
+                             linetype=factor(woody.type,levels=ipcc.vars.l)), 
                          linewidth=1.5) +
               scale_fill_manual(values=c("olivedrab3","olivedrab4",v.palette[3])) +
               scale_color_manual(values=c("red","royalblue1")) +
@@ -379,34 +375,29 @@ p.l = ggplot(stock.df[which(stock.df$variable.label %in% stack.vars.l),],
                          label.r=unit(0,"pt"),label.size=0,
                          size=10,fontface="bold")
 p.l
-abg.df = stock.df[which(stock.df$variable.label == "Aboveground woody biomass"),]
-bg.df = stock.df[which(stock.df$variable.label == "Belowground woody biomass"),]
-round(bg.df$posterior.mean/(bg.df$posterior.mean+abg.df$posterior.mean)*100,1)
+#abg.df = stock.hdi.df.best[which(stock.hdi.df.best$variable.label == "Aboveground woody biomass"),]
+#bg.df = stock.hdi.df.best[which(stock.hdi.df.best$variable.label == "Belowground woody biomass"),]
+#round(bg.df$posterior.mean/(bg.df$posterior.mean+abg.df$posterior.mean)*100,1)
 
 # debris plot
-stack.vars.d.old = c("Herbaceous litter","Fine woody debris (< 2.5 cm)",
-                     "Fine woody debris (2.5-7.5 cm)","Coarse woody debris (>= 7.6 cm)",
-                     "Dead stems (< 2.5 cm)","Standing dead trees (>= 2.5 cm)")
-stack.vars.d.new = c("Herbaceous litter","Fine woody debris (< 2.5 cm)",
-                     "Fine woody debris (2.5-7.5 cm)","Coarse woody debris (\u2265 7.6 cm)",
-                     "Dead stems (< 2.5 cm)","Standing dead trees (\u2265 2.5 cm)")
+stack.vars.d.old = c("Herbaceous litter","Fine woody debris (< 7.6 cm)",
+                     "Coarse woody debris (>= 7.6 cm)","Standing dead trees")
+stack.vars.d.new = c("Herbaceous litter","Fine woody debris (< 7.6 cm)",
+                     "Coarse woody debris (\u2265 7.6 cm)","Standing dead trees")
 ipcc.vars.d = c("Restored temperate forest","Natural temperate forest")
-stock.df.debris = stock.df[which(stock.df$variable.label %in% stack.vars.d.old),]
+stock.df.debris = stock.hdi.df.best[which(stock.hdi.df.best$variable.label %in% stack.vars.d.old),]
 stock.df.debris$label.new = rep(0, nrow(stock.df.debris))
-for (i in 1:6) { stock.df.debris$label.new[which(stock.df.debris$variable.label == stack.vars.d.old[i])] = stack.vars.d.new [i] }
+for (i in 1:n.t) { stock.df.debris$label.new[which(stock.df.debris$variable.label == stack.vars.d.old[i])] = stack.vars.d.new [i] }
 p.d = ggplot(stock.df.debris, 
-             aes(y=factor(treatment, levels=trt.names),
-                 x=posterior.mean, 
+             aes(y=factor(full.treatment.name, levels=trt.names), 
+                 x=exp(posterior.mean)*variable.mean,  
                  fill=factor(label.new, levels=stack.vars.d.new))) +
              geom_bar(stat="identity",position="stack") + 
-             labs(fill="",y="",
-                  x="Posterior mean stock (Mg C/ha)",title="") + 
+             labs(fill="",y="",x="Posterior mean stock (Mg C/ha)",title="") + 
              geom_vline(data=ipcc.df, 
                         aes(xintercept=debris.value,
-                            color=factor(debris.type,
-                                         levels=ipcc.vars.d),
-                            linetype=factor(debris.type,
-                                            levels=ipcc.vars.d)), 
+                            color=factor(debris.type,levels=ipcc.vars.d),
+                            linetype=factor(debris.type,levels=ipcc.vars.d)), 
                         linewidth=1.5) +
              scale_color_manual(values=c("red","royalblue1")) +
              scale_linetype_manual(values=c("solid","dashed")) + 
@@ -430,65 +421,50 @@ p.d
 # total ecosystem
 stack.vars.e = c("Soil inorganic carbon","Soil organic carbon","Total dead vegetation","Total live vegetation")
 ipcc.vars.e = c("Restored forested wetland","Natural forested wetland")
-p.e = ggplot(stock.df[which(stock.df$variable.label %in% stack.vars.e),], 
-             aes(y=factor(treatment, levels=trt.names),
-                 x=posterior.mean,  
-                 fill=factor(variable.label, 
-                             levels=stack.vars.e))) +
-            geom_bar(stat="identity",position="stack") + 
-            labs(fill="",y="",
-                 x="Posterior mean stock (Mg C/ha)",title="") +
-            geom_vline(data=ipcc.df, 
-                       aes(xintercept=total.value, 
-                           color=factor(total.type,
-                                        levels=ipcc.vars.e),
-                           linetype=factor(total.type,
-                                           levels=ipcc.vars.e)), 
-                       linewidth=1.5) +
-            scale_fill_manual(values=c(brewer.pal(9,"Greys")[5],
-                                       s.palette[3],d.palette[4],
-                                       v.palette[3]),
-                              labels=c("TIC",
-                                       "SOC",
-                                       "Litter and woody debris",
-                                       "Living biomass")) +
-            scale_color_manual(values=c("red","royalblue1")) +
-            scale_linetype_manual(values=c("solid","dashed")) +
-            guides(fill=guide_legend(order=1),
-                   color=guide_legend(title="IPCC total organic C",order=2),
-                   linetype=guide_legend(title="IPCC total organic C",order=2)) +
-            theme(text=element_text(size=14), 
-                  legend.key.size=unit(0.7,'cm'),
-                  legend.background=element_rect(fill="transparent", color=NA),
-                  plot.margin=unit(c(0,0,1,0),"lines"),
-                  plot.background=element_rect(color="black",linewidth=1),
-                  legend.key=element_rect(fill="darkgrey")) +
-            coord_cartesian(xlim = c(0,280), clip="off") +
-            geom_label(x=525,y=6.6,label="c",
-                       color="black",fill=alpha("white",0.9),
-                       label.r=unit(0,"pt"),label.size=0,
-                       size=10,fontface="bold")
+p.e = ggplot(stock.hdi.df.best[which(stock.hdi.df.best$variable.label %in% stack.vars.e),], 
+             aes(y=factor(full.treatment.name, levels=trt.names), 
+                 x=exp(posterior.mean)*variable.mean,   
+                 fill=factor(variable.label, levels=stack.vars.e))) +
+             geom_bar(stat="identity",position="stack") + 
+             labs(fill="",y="",x="Posterior mean stock (Mg C/ha)",title="") +
+             geom_vline(data=ipcc.df, 
+                        aes(xintercept=total.value, 
+                            color=factor(total.type,levels=ipcc.vars.e),
+                            linetype=factor(total.type,levels=ipcc.vars.e)), 
+                         linewidth=1.5) +
+             scale_fill_manual(values=c(brewer.pal(9,"Greys")[5],
+                                        s.palette[3],d.palette[4],
+                                        v.palette[3]),
+                               labels=c("TIC","SOC","Litter and woody debris","Living biomass")) +
+             scale_color_manual(values=c("red","royalblue1")) +
+             scale_linetype_manual(values=c("solid","dashed")) +
+             guides(fill=guide_legend(order=1),
+                    color=guide_legend(title="IPCC total organic C",order=2),
+                    linetype=guide_legend(title="IPCC total organic C",order=2)) +
+             theme(text=element_text(size=14), 
+                   legend.key.size=unit(0.7,'cm'),
+                   legend.background=element_rect(fill="transparent", color=NA),
+                   plot.margin=unit(c(0,0,1,0),"lines"),
+                   plot.background=element_rect(color="black",linewidth=1),
+                   legend.key=element_rect(fill="darkgrey")) +
+             coord_cartesian(xlim = c(0,300), clip="off") +
+             geom_label(x=562,y=6.6,label="c",
+                        color="black",fill=alpha("white",0.9),
+                        label.r=unit(0,"pt"),label.size=0,
+                        size=10,fontface="bold")
 p.e
 
 # richness plot
-stack.vars.r = c("Total richness","Herbaceous layer richness","Tree layer richness")
-stack.vars.new = c("Herbaceous layer only","Tree layer only","Tree and herbaceous layer")
-df.sp = stock.df[which(stock.df$variable.label %in% stack.vars.r),]
-df.sp.wide = pivot_wider(df.sp, 
-                         id_cols=treatment, 
-                         names_from=variable.label, 
-                         values_from=posterior.mean)
-df.sp.wide$`Tree and herbaceous layer` = df.sp.wide$`Herbaceous layer richness` + df.sp.wide$`Tree layer richness` - df.sp.wide$`Total richness`
-df.sp.new = df.sp.wide[,-which(colnames(df.sp.wide) == "Total richness")]
-colnames(df.sp.new) = c("treatment",stack.vars.new)
-df.sp.melt = melt(df.sp.new, id.vars=c("treatment"))
-p.r = ggplot(data=df.sp.melt) + 
-             geom_bar(aes(y=factor(treatment, levels=trt.names), 
-                          x=value, 
-                          fill=factor(variable, 
-                                      levels=rev(stack.vars.new))),
-                          stat="identity",
-                          position="stack") +
+stack.vars.r.old = c("Herbaceous layer richness","Tree layer richness","Both tree and herbaceous layer") 
+stack.vars.r.new = c("Herbaceous layer only","Tree layer only","Tree and herbaceous layer")
+richness.df = stock.hdi.df.best[which(stock.hdi.df.best$variable.label %in% stack.vars.r.old),]
+richness.df$label.new = rep(0, nrow(richness.df))
+for (i in 1:n.t) { richness.df$label.new[which(richness.df$variable.label == stack.vars.r.old[i])] = stack.vars.r.new[i] }
+p.r = ggplot(richness.df,
+             aes(y=factor(full.treatment.name, levels=trt.names), 
+                 x=exp(posterior.mean)*variable.mean,
+                 fill=factor(label.new, levels=rev(stack.vars.r.new)))) + 
+             geom_bar(stat="identity",position="stack") +
              labs(fill="",y="",x="Posterior mean richness",title="") + 
              scale_fill_manual(values=r.palette) +
              theme(text = element_text(size=14),
@@ -497,8 +473,8 @@ p.r = ggplot(data=df.sp.melt) +
                    plot.margin=unit(c(0,0,1,0),"lines"),
                    plot.background=element_rect(color="black",linewidth=1),
                    legend.key=element_rect(fill="darkgrey")) +
-             coord_cartesian(xlim=c(0,21),clip="off") +
-             geom_label(x=40.5,y=6.6,label="d",
+             coord_cartesian(xlim=c(0,20),clip="off") +
+             geom_label(x=38.6,y=6.6,label="d",
                         color="black",fill=alpha("white",0.9),
                         label.r=unit(0,"pt"),label.size=0,
                         size=10,fontface="bold")
@@ -509,6 +485,7 @@ p.c.stocks = (p.l+theme(plot.margin=unit(c(0,0,0,0),"pt"))+p.d)/(p.e+theme(plot.
 p.c.stocks
 ggsave("Figures/Figure6_Veg_Ecosystem_Cstocks_Richness.jpeg", 
        plot=p.c.stocks, width=40, height=23, units="cm", dpi=1000)
+
 
 ################################################################################
 # plot C stocks by species for snags, coarse woody debris, live trees,

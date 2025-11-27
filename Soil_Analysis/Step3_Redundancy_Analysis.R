@@ -9,12 +9,13 @@ library(dplyr)
 library(vegan)
 
 ### script that implements redundancy analysis on subset of independent variables
-### to explain variation in SOC, POC, MOC, and the POC:MOC ratio
+### to explain variation in SOC, POC, MAOC, and the POC:MAOC ratio
 
 # treatments
-trt.letters = c("A","B","C","D","E","R")
-trt.names = c("Balled-and-burlapped","Bareroot","Seedling","Acorn","Seedbank","Reference")
-n.t = length(trt.letters)
+trt.df = read.csv("Metadata/Treatment_Letters_Names.csv")
+trt.letters = trt.df[,"Treatment.letters"]
+trt.names = trt.df[,"Treatment.names"]
+n.t = nrow(trt.df)
 
 # read in all soil data
 soil.df = read.csv("Soil_Analysis/Clean_Data/Soil_Data_by_Quadrat_June2023.csv")
@@ -27,11 +28,11 @@ text.cols = c("Sand","Silt","Clay")
 
 # variables to omit
 leave.out = c("texture.class","n.release","volumetric.moisture","coarse.material",
-              ag.cols,meq.cols)
+              ag.cols, meq.cols)
 soil.df = soil.df[,-which(colnames(soil.df) %in% leave.out)]
 
 # read in biomass data
-bm.df = read.csv("Understory_Analysis/Clean_Data/Biomass_By_Quadrat_Fall2022.csv")
+bm.df = read.csv("Understory_Analysis/Clean_Data/Biomass_By_Quadrat_Sep2022.csv")
 
 # combine biomass and soil data
 soil.bm.df = left_join(soil.df, bm.df, 
@@ -41,13 +42,13 @@ soil.bm.df = left_join(soil.df, bm.df,
 soil.bm.df = soil.bm.df[-which(soil.bm.df$treatment == "R"),]
 
 # update column names
-colnames(soil.bm.df)[5:36] = c("Temp","Moist","BD","TN","TC","CN","SOC",text.cols,
+colnames(soil.bm.df)[6:37] = c("Temp","Moist","BD","TN","TC","CN","SOC",text.cols,
                                "pH","P","K","Ca","Mg","SOM","NO3","NH4","CEC",
-                               "POC","EV","HT","MWD","TIC","MOC","POC_MOC",
+                               "POC","EV","HT","MWD","TIC","MAOC","POC_MAOC",
                                "HB","HL","FWD","MB","PAB","HJB")
 
 # select explanatory and response variables
-y.cols = c("SOC","POC","MOC","POC_MOC")
+y.cols = c("SOC","POC","MAOC","POC_MAOC")
 x.cols = c("Temp","Moist","BD","TN","CN","Sand","Clay",
            "pH","P","NO3","NH4","CEC","EV","HT",
            "MWD","HL","FWD","MB","PAB","HJB")
@@ -118,10 +119,10 @@ ggsave("Figures/Figure5_Soil_Vegetation_RDA_HTElev.jpeg",
        plot=rda.plot, width=26, height=20, units="cm", dpi=600)
 
 # compute Pearsons r^2 to confirm inference about correlations
-# among SOC, MOC, POC, and POC:MOC ratio
-cor(df.scale$SOC, df.scale$MOC, method = "pearson")
+# among SOC, MAOC, POC, and POC:MAOC ratio
+cor(df.scale$SOC, df.scale$MAOC, method = "pearson")
 cor(df.scale$SOC, df.scale$POC, method = "pearson")
-cor(df.scale$SOC, df.scale$POC_MOC, method = "pearson")
+cor(df.scale$SOC, df.scale$POC_MAOC, method = "pearson")
 
 ## make heatmap of pearson R^2 for all RDA variables
 
